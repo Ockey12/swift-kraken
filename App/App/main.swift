@@ -6,6 +6,7 @@
 //
 
 import Cocoa
+import TCAExample
 
 let app = NSApplication.shared
 let delegate = AppDelegate()
