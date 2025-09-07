@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		E5556A362E6D1FE500AF5A36 /* App in Frameworks */ = {isa = PBXBuildFile; productRef = E5556A352E6D1FE500AF5A36 /* App */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		E5556A0E2E6D1DF400AF5A36 /* swift-kraken-app.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "swift-kraken-app.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E5556A362E6D1FE500AF5A36 /* App in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -33,6 +38,7 @@
 			isa = PBXGroup;
 			children = (
 				E5556A102E6D1DF400AF5A36 /* swift-kraken-app */,
+				E5556A342E6D1FE500AF5A36 /* Frameworks */,
 				E5556A0F2E6D1DF400AF5A36 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -43,6 +49,13 @@
 				E5556A0E2E6D1DF400AF5A36 /* swift-kraken-app.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		E5556A342E6D1FE500AF5A36 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -65,6 +78,7 @@
 			);
 			name = "swift-kraken-app";
 			packageProductDependencies = (
+				E5556A352E6D1FE500AF5A36 /* App */,
 			);
 			productName = "swift-kraken-app";
 			productReference = E5556A0E2E6D1DF400AF5A36 /* swift-kraken-app.app */;
@@ -323,6 +337,13 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		E5556A352E6D1FE500AF5A36 /* App */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = App;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = E5556A062E6D1DF400AF5A36 /* Project object */;
 }
