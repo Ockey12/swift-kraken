@@ -2,6 +2,9 @@
 <Workspace
    version = "1.0">
    <FileRef
+      location = "group:Package">
+   </FileRef>
+   <FileRef
       location = "group:swift-kraken-app/swift-kraken-app.xcodeproj">
    </FileRef>
 </Workspace>
