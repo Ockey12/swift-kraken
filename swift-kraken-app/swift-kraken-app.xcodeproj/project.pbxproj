@@ -65,6 +65,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = E5556A1D2E6D1DF500AF5A36 /* Build configuration list for PBXNativeTarget "swift-kraken-app" */;
 			buildPhases = (
+				E5556A402E6EC15F00AF5A36 /* ShellScript */,
 				E5556A0A2E6D1DF400AF5A36 /* Sources */,
 				E5556A0B2E6D1DF400AF5A36 /* Frameworks */,
 				E5556A0C2E6D1DF400AF5A36 /* Resources */,
@@ -127,6 +128,27 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		E5556A402E6EC15F00AF5A36 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# When building Debug, run SwiftFormat in lint mode.\nif [ $CONFIGURATION = \"Debug\" ]; then\n    export SDKROOT=$(xcrun --sdk macosx --show-sdk-path)\n    swift run --package-path \"$PROJECT_DIR/../BuildTools\" -c release swiftformat --lint --lenient \"$PROJECT_DIR/..\"\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		E5556A0A2E6D1DF400AF5A36 /* Sources */ = {
@@ -270,6 +292,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = Y2VF5F9C77;
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSMainStoryboardFile = Main;
@@ -298,6 +321,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = Y2VF5F9C77;
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSMainStoryboardFile = Main;
