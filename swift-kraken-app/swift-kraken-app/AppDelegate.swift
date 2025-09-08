@@ -5,16 +5,16 @@
 //  Created by Ockey on 2025/09/07.
 //
 
-import Cocoa
 import App
+import Cocoa
 
 @main
 class AppDelegate: NSObject, NSApplicationDelegate {
-    func applicationDidFinishLaunching(_ aNotification: Notification) {}
+    func applicationDidFinishLaunching(_: Notification) {}
 
-    func applicationWillTerminate(_ aNotification: Notification) {}
+    func applicationWillTerminate(_: Notification) {}
 
-    func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
-        return true
+    func applicationSupportsSecureRestorableState(_: NSApplication) -> Bool {
+        true
     }
 }

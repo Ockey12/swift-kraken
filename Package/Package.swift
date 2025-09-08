@@ -7,10 +7,11 @@ let package = Package(
     products: [
         .library(
             name: "App",
-            targets: ["App"]),
+            targets: ["App"],
+        ),
     ],
     targets: [
         .target(name: "App"),
         .testTarget(name: "EmptyTest"),
-    ]
+    ],
 )

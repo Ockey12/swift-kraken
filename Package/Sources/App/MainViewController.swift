@@ -1,5 +1,5 @@
 //
-//  EmptyTest.swift
+//  MainViewController.swift
 //  MainViewController
 //
 //  Created by Ockey on 2025/09/07.
@@ -16,16 +16,16 @@ public final class MainViewController: NSViewController {
         return label
     }()
 
-    public override func viewDidLoad() {
+    override public func viewDidLoad() {
         super.viewDidLoad()
         view.addSubview(infoLabel)
         NSLayoutConstraint.activate([
             infoLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            infoLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+            infoLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
         ])
     }
 
-    public override func viewDidAppear() {
+    override public func viewDidAppear() {
         super.viewDidAppear()
         view.window?.title = "Swift-Kraken"
     }
