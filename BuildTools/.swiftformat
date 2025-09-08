@@ -1,0 +1,38 @@
+--swiftversion 6.1
+
+# Default Rules (enabled by default)
+--guard-else same-line
+--header ignore
+--tab-width 4
+--decimal-grouping none
+--binary-grouping none
+--octal-grouping none
+--hex-grouping none
+--exponent-case lowercase
+--disable preferForLoop
+--semicolons never
+--import-grouping testable-last
+--disable strongOutlets
+--max-width 200
+--wrap-arguments before-first
+--wrap-parameters before-first
+--disable wrapMultilineStatementBraces
+
+# Opt-in Rules (disabled by default)
+--enable acronyms
+--enable blankLineAfterSwitchCase
+--enable emptyExtensions
+--enable environmentEntry
+--enable isEmpty
+--enable noGuardInTests
+--enable privateStateVariables
+--enable redundantEquatable
+--enable redundantMemberwiseInit
+--enable redundantProperty
+--enable throwingTests
+--enable wrapConditionalBodies
+--enable wrapEnumCases
+--enable wrapMultilineConditionalAssignment
+
+# Exclude
+--exclude "**/build", "**/.build", DerivedData
