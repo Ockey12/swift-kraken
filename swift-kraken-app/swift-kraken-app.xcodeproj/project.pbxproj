@@ -146,7 +146,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# When building Debug, run SwiftFormat in lint mode.\nif [ $CONFIGURATION = \"Debug\" ]; then\n    export SDKROOT=$(xcrun --sdk macosx --show-sdk-path)\n    swift run --package-path \"$PROJECT_DIR/../BuildTools\" -c release swiftformat --lint --lenient \"$PROJECT_DIR/..\"\nfi\n";
+			shellScript = "# When building Debug, run SwiftFormat in lint mode.\nif [ $CONFIGURATION = \"Debug\" ]; then\n    export SDKROOT=$(xcrun --sdk macosx --show-sdk-path)\n    swift run --package-path \"$PROJECT_DIR/../BuildTools\" -c release swiftformat --config \"$PROJECT_DIR/../BuildTools/.swiftformat\" --lint --lenient \"$PROJECT_DIR/..\"\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
