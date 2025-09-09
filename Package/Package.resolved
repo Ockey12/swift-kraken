@@ -1,5 +1,5 @@
 {
-  "originHash" : "bee9a14e1cda6aa79b0044e498d925346528262e75693119052e169da1c9cfaf",
+  "originHash" : "32b1080707591d88e15dbcd5fa1b056e4ded086dd5088398b22fb96b54579772",
   "pins" : [
     {
       "identity" : "swift-argument-parser",
@@ -26,15 +26,6 @@
       "state" : {
         "revision" : "702db03a2b7277e89f5859dd7b260160636d1187",
         "version" : "0.2.0"
-      }
-    },
-    {
-      "identity" : "swiftformat",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/nicklockwood/SwiftFormat",
-      "state" : {
-        "revision" : "b83a8f132ff5430f3b6ff7d912baa407caea9e29",
-        "version" : "0.57.2"
       }
     },
     {
