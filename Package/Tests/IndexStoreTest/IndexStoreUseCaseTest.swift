@@ -5,8 +5,9 @@
 //  Created by Ockey on 2025/09/09.
 //
 
-import Declaration
+import CustomDump
 import Foundation
+import Location
 import TestData
 import Testing
 
@@ -20,7 +21,7 @@ func extractUSRsFromTestData() async throws {
     let fullPath = testFileURL.path()
     let useCase = IndexStoreUseCase(repository: LiveIndexStoreRepository())
     let response = try await useCase.extractUSR(indexStoreURL: indexStoreURL, projectRootURL: testFileURL)
-    let expectResponse = IndexStoreUseCase.Response(
+    let expectedResult = IndexStoreUseCase.Response(
         definitionUSRs: [
             // ParameterType
             Location(fullPath: fullPath, line: 8, column: 8): [
@@ -47,8 +48,8 @@ func extractUSRsFromTestData() async throws {
                 USR("s:8TestData14TypeWithMethodV6method5paramAA011ReturnValueC0VAA09ParameterC0V_tF"),
             ],
             // TypeWithMethod.method.param
-            Location(fullPath: fullPath, line: 15, column: 17): [
-                USR("s:8TestData14TypeWithMethodV6method5paramAA011ReturnValueC0VAA09ParameterC0V_tFAEL_AIvp"),
+            Location(fullPath: fullPath, line: 15, column: 23): [
+                USR("s:8TestData14TypeWithMethodV6method5paramAA011ReturnValueC0VAA09ParameterC0V_tF1_L_AIvp"),
             ],
         ],
         referrerUSRs: [
@@ -56,14 +57,14 @@ func extractUSRsFromTestData() async throws {
             USR("s:8TestData13ParameterTypeV"): [
                 Occurrence(
                     usr: USR("s:8TestData14TypeWithMethodV6method5paramAA011ReturnValueC0VAA09ParameterC0V_tF"),
-                    location: Location(fullPath: fullPath, line: 15, column: 24),
+                    location: Location(fullPath: fullPath, line: 15, column: 26),
                 ),
             ],
             // TypeWithMethod.method -> ReturnValueType
             USR("s:8TestData15ReturnValueTypeV"): [
                 Occurrence(
                     usr: USR("s:8TestData14TypeWithMethodV6method5paramAA011ReturnValueC0VAA09ParameterC0V_tF"),
-                    location: Location(fullPath: fullPath, line: 15, column: 42),
+                    location: Location(fullPath: fullPath, line: 15, column: 44),
                 ),
                 Occurrence(
                     usr: USR("s:8TestData14TypeWithMethodV6method5paramAA011ReturnValueC0VAA09ParameterC0V_tF"),
@@ -104,12 +105,12 @@ func extractUSRsFromTestData() async throws {
                 // TypeWithMethod.method -> ParameterType
                 Occurrence(
                     usr: USR("s:8TestData13ParameterTypeV"),
-                    location: Location(fullPath: fullPath, line: 15, column: 24),
+                    location: Location(fullPath: fullPath, line: 15, column: 26),
                 ),
                 // TypeWithMethod.method -> ReturnValueType
                 Occurrence(
                     usr: USR("s:8TestData15ReturnValueTypeV"),
-                    location: Location(fullPath: fullPath, line: 15, column: 42),
+                    location: Location(fullPath: fullPath, line: 15, column: 44),
                 ),
                 Occurrence(
                     usr: USR("s:8TestData15ReturnValueTypeV"),
@@ -138,5 +139,6 @@ func extractUSRsFromTestData() async throws {
             ],
         ],
     )
-    #expect(response == expectResponse)
+
+    expectNoDifference(expectedResult, response)
 }

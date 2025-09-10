@@ -13,8 +13,20 @@ let package = Package(
     ],
     dependencies: [
         .package(
+            url: "https://github.com/pointfreeco/swift-custom-dump",
+            exact: "1.3.3"
+        ),
+        .package(
+            url: "https://github.com/pointfreeco/swift-identified-collections.git",
+            exact: "1.1.1",
+        ),
+        .package(
             url: "https://github.com/kateinoigakukun/swift-indexstore.git",
             branch: "master",
+        ),
+        .package(
+            url: "https://github.com/swiftlang/swift-syntax.git",
+            exact: "601.0.1",
         ),
         .package(
             url: "https://github.com/p-x9/xcode-indexstore-debug.git",
@@ -26,26 +38,50 @@ let package = Package(
             name: "App",
         ),
         .target(
-            name: "Declaration",
-        ),
-        .target(
             name: "IndexStore",
             dependencies: [
-                "Declaration",
+                "Location",
                 .product(name: "SwiftIndexStore", package: "swift-indexstore"),
             ],
         ),
+        .target(name: "Location"),
+        .target(
+            name: "SwiftDeclaration",
+            dependencies: [
+                "IndexStore",
+                "UUID",
+                .product(name: "IdentifiedCollections", package: "swift-identified-collections"),
+                .product(name: "SwiftParser", package: "swift-syntax"),
+                .product(name: "SwiftSyntax", package: "swift-syntax"),
+            ]
+        ),
         .target(name: "TestData"),
+        .target(name: "UUID"),
         .testTarget(
             name: "IndexStoreTest",
             dependencies: [
-                "Declaration",
                 "IndexStore",
+                "Location",
                 "TestData",
+                .product(name: "CustomDump", package: "swift-custom-dump"),
             ],
             plugins: [
                 .plugin(name: "IndexStoreDebugBuildToolPlugin", package: "xcode-indexstore-debug"),
             ],
         ),
+        .testTarget(
+            name: "VisitorTest",
+            dependencies: [
+                "IndexStore",
+                "Location",
+                "SwiftDeclaration",
+                "TestData",
+                "UUID",
+                .product(name: "CustomDump", package: "swift-custom-dump"),
+                .product(name: "IdentifiedCollections", package: "swift-identified-collections"),
+                .product(name: "SwiftParser", package: "swift-syntax"),
+                .product(name: "SwiftSyntax", package: "swift-syntax"),
+            ]
+        )
     ],
 )

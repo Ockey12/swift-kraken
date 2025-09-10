@@ -5,8 +5,8 @@
 //  Created by Ockey on 2025/09/08.
 //
 
-import Declaration
 import Foundation
+import Location
 import SwiftIndexStore
 
 public protocol IndexStoreRepository {
