@@ -5,32 +5,31 @@
 //  Created by Ockey on 2025/09/09.
 //
 
+import Dependencies
 import IdentifiedCollections
 import IndexStore
 import Location
 import SwiftParser
 import SwiftSyntax
-import UUID
 
 final class AbstractDeclarationVisitor: SyntaxVisitor {
     private let fullPath: String
-    private let usrStore: IndexStoreUseCase.Response
+    private let usrStore: USRStore
     private let sourceLocationConverter: SourceLocationConverter
-    private var uuidRepository: UUIDRepository
     private var abstractDeclarationsBuffer: [AbstractDeclaration] = []
 
-    public var result: IdentifiedArrayOf<AbstractDeclaration> = []
+    var result: IdentifiedArrayOf<AbstractDeclaration> = []
+
+    @Dependency(\.uuid) private var uuid
 
     init(
         in fullPath: String,
-        usrStore: IndexStoreUseCase.Response,
-        sourceLocationConverter: SourceLocationConverter,
-        uuidRepository: UUIDRepository,
+        usrStore: USRStore,
+        sourceLocationConverter: SourceLocationConverter
     ) {
         self.fullPath = fullPath
         self.usrStore = usrStore
         self.sourceLocationConverter = sourceLocationConverter
-        self.uuidRepository = uuidRepository
 
         super.init(viewMode: .sourceAccurate)
     }
@@ -50,7 +49,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
                 column: nodeRange.end.column,
             )
         var abstractDeclaration = AbstractDeclaration(
-            id: uuidRepository.uuid(),
+            id: uuid(),
             name: node.name.text,
             sourceLocationRange: sourceLocationRange,
             kind: .struct,
@@ -110,7 +109,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
                 column: nodeRange.end.column,
             )
         var abstractDeclaration = AbstractDeclaration(
-            id: uuidRepository.uuid(),
+            id: uuid(),
             name: node.name.text,
             sourceLocationRange: sourceLocationRange,
             kind: .class,
@@ -169,7 +168,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
                 column: nodeRange.end.column,
             )
         var abstractDeclaration = AbstractDeclaration(
-            id: uuidRepository.uuid(),
+            id: uuid(),
             name: node.name.text,
             sourceLocationRange: sourceLocationRange,
             kind: .enum,
@@ -233,7 +232,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
 
             for identifier in identifiers {
                 var abstractDeclaration = AbstractDeclaration(
-                    id: uuidRepository.uuid(),
+                    id: uuid(),
                     name: identifier.identifier.text,
                     sourceLocationRange: sourceLocationRange,
                     kind: .variable,
@@ -341,7 +340,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
                 column: nodeRange.end.column,
             )
         var abstractDeclaration = AbstractDeclaration(
-            id: uuidRepository.uuid(),
+            id: uuid(),
             name: node.name.text,
             sourceLocationRange: sourceLocationRange,
             kind: .function,

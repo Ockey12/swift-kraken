@@ -1,21 +1,23 @@
 //
-//  IndexStoreRepository.swift
+//  USRStoreClient.swift
 //  Package
 //
-//  Created by Ockey on 2025/09/08.
+//  Created by Ockey on 2025/09/11.
 //
 
+import Dependencies
+import DependenciesMacros
 import Foundation
 import Location
 import SwiftIndexStore
 
-public protocol IndexStoreRepository {
-    typealias Response = USRStore
-    func extractUSR(indexStoreURL: URL, projectRootURL: URL) async throws -> Response
+@DependencyClient
+public struct USRStoreClient: Sendable {
+    public var extract: @Sendable (_ indexStoreURL: URL, _ projectRootURL: URL) async throws -> USRStore
 }
 
-public struct LiveIndexStoreRepository: IndexStoreRepository {
-    public func extractUSR(indexStoreURL: URL, projectRootURL: URL) async throws -> Response {
+extension USRStoreClient: DependencyKey {
+    public static let liveValue: Self = Self { indexStoreURL, projectRootURL in
         let indexStore = try IndexStore.open(store: indexStoreURL, lib: .open())
         var definitionUSRs: [Location: Set<USR>] = [:]
         var referrerUSRs: [USR: Set<Occurrence>] = [:]
@@ -62,7 +64,7 @@ public struct LiveIndexStoreRepository: IndexStoreRepository {
             return true
         } // try indexStore.forEachUnits
 
-        return Response(
+        return USRStore(
             definitionUSRs: definitionUSRs,
             referrerUSRs: referrerUSRs,
             referencedUSRs: referencedUSRs,
@@ -70,14 +72,9 @@ public struct LiveIndexStoreRepository: IndexStoreRepository {
     }
 }
 
-public struct FakeIndexStoreRepository: IndexStoreRepository {
-    let fakeResponse: Response
-
-    public init(fakeResponse: Response) {
-        self.fakeResponse = fakeResponse
-    }
-
-    public func extractUSR(indexStoreURL _: URL, projectRootURL _: URL) async throws -> Response {
-        fakeResponse
+extension DependencyValues {
+    public var usrStoreClient: USRStoreClient {
+        get { self[USRStoreClient.self] }
+        set { self[USRStoreClient.self] = newValue }
     }
 }

@@ -17,6 +17,10 @@ let package = Package(
             exact: "1.3.3"
         ),
         .package(
+            url: "https://github.com/pointfreeco/swift-dependencies.git",
+            exact: "1.9.4"
+        ),
+        .package(
             url: "https://github.com/pointfreeco/swift-identified-collections.git",
             exact: "1.1.1",
         ),
@@ -41,6 +45,8 @@ let package = Package(
             name: "IndexStore",
             dependencies: [
                 "Location",
+                .product(name: "Dependencies", package: "swift-dependencies"),
+                .product(name: "DependenciesMacros", package: "swift-dependencies"),
                 .product(name: "SwiftIndexStore", package: "swift-indexstore"),
             ],
         ),
@@ -56,7 +62,6 @@ let package = Package(
             ]
         ),
         .target(name: "TestData"),
-        .target(name: "UUID"),
         .testTarget(
             name: "IndexStoreTest",
             dependencies: [
@@ -76,8 +81,8 @@ let package = Package(
                 "Location",
                 "SwiftDeclaration",
                 "TestData",
-                "UUID",
                 .product(name: "CustomDump", package: "swift-custom-dump"),
+                .product(name: "Dependencies", package: "swift-dependencies"),
                 .product(name: "IdentifiedCollections", package: "swift-identified-collections"),
                 .product(name: "SwiftParser", package: "swift-syntax"),
                 .product(name: "SwiftSyntax", package: "swift-syntax"),
