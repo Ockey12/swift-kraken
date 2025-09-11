@@ -23,20 +23,20 @@ extension RootDirectoryClient: DependencyKey {
         @Dependency(\.usrStoreClient) var usrStoreClient
         let usrStore = try await usrStoreClient.extract(
             indexStoreURL: indexStoreURL,
-            projectRootURL: rootDirectoryURL
+            projectRootURL: rootDirectoryURL,
         )
 
         let rootDirectory = try extractDirectory(from: rootDirectoryURL, usrStore: usrStore)
 
         return RootDirectory(
             directory: rootDirectory,
-            keyPathTable: rootDirectory.generateKeyPath(fromRootDirectory: \.self)
+            keyPathTable: rootDirectory.generateKeyPath(fromRootDirectory: \.self),
         )
     }
 }
 
-extension DependencyValues {
-    public var rootDirectoryClient: RootDirectoryClient {
+public extension DependencyValues {
+    var rootDirectoryClient: RootDirectoryClient {
         get { self[RootDirectoryClient.self] }
         set { self[RootDirectoryClient.self] = newValue }
     }
@@ -48,7 +48,7 @@ private extension RootDirectoryClient {
         let items = try fileManager.contentsOfDirectory(
             at: url,
             includingPropertiesForKeys: [.isDirectoryKey],
-            options: [.skipsHiddenFiles]
+            options: [.skipsHiddenFiles],
         )
 
         var subDirectories: IdentifiedArrayOf<Directory> = []
@@ -70,7 +70,7 @@ private extension RootDirectoryClient {
         return Directory(
             fullPath: url.path(),
             subDirectories: subDirectories,
-            files: files
+            files: files,
         )
     }
 
@@ -82,7 +82,7 @@ private extension RootDirectoryClient {
         let visitor = AbstractDeclarationVisitor(
             in: fullPath,
             usrStore: usrStore,
-            sourceLocationConverter: sourceLocationConverter
+            sourceLocationConverter: sourceLocationConverter,
         )
 
         visitor.walk(parsedCode)
@@ -90,7 +90,7 @@ private extension RootDirectoryClient {
         return File(
             fullPath: fullPath,
             sourceCode: sourceCode,
-            abstractDeclarations: visitor.result
+            abstractDeclarations: visitor.result,
         )
     }
 }

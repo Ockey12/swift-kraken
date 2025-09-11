@@ -72,8 +72,8 @@ extension USRStoreClient: DependencyKey {
     }
 }
 
-extension DependencyValues {
-    public var usrStoreClient: USRStoreClient {
+public extension DependencyValues {
+    var usrStoreClient: USRStoreClient {
         get { self[USRStoreClient.self] }
         set { self[USRStoreClient.self] = newValue }
     }

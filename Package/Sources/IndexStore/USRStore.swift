@@ -17,9 +17,9 @@ public struct USRStore: Equatable {
     public var referencedUSRs: [USR: Set<Occurrence>]
 
     public init(
-        definitionUSRs: [Location : Set<USR>],
-        referrerUSRs: [USR : Set<Occurrence>],
-        referencedUSRs: [USR : Set<Occurrence>]
+        definitionUSRs: [Location: Set<USR>],
+        referrerUSRs: [USR: Set<Occurrence>],
+        referencedUSRs: [USR: Set<Occurrence>],
     ) {
         self.definitionUSRs = definitionUSRs
         self.referrerUSRs = referrerUSRs

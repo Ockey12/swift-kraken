@@ -12,17 +12,17 @@ let package = Package(
         ),
         .library(
             name: "SwiftDeclaration",
-            targets: ["SwiftDeclaration"]
-        )
+            targets: ["SwiftDeclaration"],
+        ),
     ],
     dependencies: [
         .package(
             url: "https://github.com/pointfreeco/swift-custom-dump",
-            exact: "1.3.3"
+            exact: "1.3.3",
         ),
         .package(
             url: "https://github.com/pointfreeco/swift-dependencies.git",
-            exact: "1.9.4"
+            exact: "1.9.4",
         ),
         .package(
             url: "https://github.com/pointfreeco/swift-identified-collections.git",
@@ -64,7 +64,7 @@ let package = Package(
                 .product(name: "DependenciesMacros", package: "swift-dependencies"),
                 .product(name: "SwiftParser", package: "swift-syntax"),
                 .product(name: "SwiftSyntax", package: "swift-syntax"),
-            ]
+            ],
         ),
         .target(name: "TestData"),
         .testTarget(
@@ -91,7 +91,7 @@ let package = Package(
                 .product(name: "IdentifiedCollections", package: "swift-identified-collections"),
                 .product(name: "SwiftParser", package: "swift-syntax"),
                 .product(name: "SwiftSyntax", package: "swift-syntax"),
-            ]
-        )
+            ],
+        ),
     ],
 )

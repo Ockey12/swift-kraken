@@ -25,7 +25,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
     init(
         in fullPath: String,
         usrStore: USRStore,
-        sourceLocationConverter: SourceLocationConverter
+        sourceLocationConverter: SourceLocationConverter,
     ) {
         self.fullPath = fullPath
         self.usrStore = usrStore

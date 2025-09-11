@@ -36,36 +36,36 @@ func rootDirectoryClientTest() async throws {
         sourceLocationRange: Location(
             fullPath: filePathInSubDirectory,
             line: 8,
-            column: 1
+            column: 1,
         )
-        ... Location(
-            fullPath: filePathInSubDirectory,
-            line: 8,
-            column: 47
-        ),
-        definitionUSRs: [subCounterViewModelUSR]
+            ... Location(
+                fullPath: filePathInSubDirectory,
+                line: 8,
+                column: 47,
+            ),
+        definitionUSRs: [subCounterViewModelUSR],
     )
 
     let fileInSubDirectory = File(
         fullPath: filePathInSubDirectory,
         sourceCode: """
-            //
-            //  FileInSubDirectory.swift
-            //  Package
-            //
-            //  Created by Ockey on 2025/09/11.
-            //
+        //
+        //  FileInSubDirectory.swift
+        //  Package
+        //
+        //  Created by Ockey on 2025/09/11.
+        //
 
-            class SubCounterViewModel: CounterViewModel {}
+        class SubCounterViewModel: CounterViewModel {}
 
-            """,
-        abstractDeclarations: [subCounterViewModel]
+        """,
+        abstractDeclarations: [subCounterViewModel],
     )
 
     let subDirectory = Directory(
         fullPath: subDirectoryPath,
         subDirectories: [],
-        files: [fileInSubDirectory]
+        files: [fileInSubDirectory],
     )
 
     // MARK: RootDirectory
@@ -81,14 +81,14 @@ func rootDirectoryClientTest() async throws {
         sourceLocationRange: Location(
             fullPath: filePathInRootDirectory,
             line: 12,
-            column: 5
+            column: 5,
         )
-        ... Location(
-            fullPath: filePathInRootDirectory,
-            line: 12,
-            column: 18
-        ),
-        definitionUSRs: [countUSR]
+            ... Location(
+                fullPath: filePathInRootDirectory,
+                line: 12,
+                column: 18,
+            ),
+        definitionUSRs: [countUSR],
     )
 
     let incrementID = UUID(uuidString: "00000000-0000-0000-0000-000000000003")!
@@ -100,14 +100,14 @@ func rootDirectoryClientTest() async throws {
         sourceLocationRange: Location(
             fullPath: filePathInRootDirectory,
             line: 14,
-            column: 5
+            column: 5,
         )
-        ... Location(
-            fullPath: filePathInRootDirectory,
-            line: 16,
-            column: 6
-        ),
-        definitionUSRs: [incrementUSR]
+            ... Location(
+                fullPath: filePathInRootDirectory,
+                line: 16,
+                column: 6,
+            ),
+        definitionUSRs: [incrementUSR],
     )
 
     let counterViewModelID = UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
@@ -120,44 +120,44 @@ func rootDirectoryClientTest() async throws {
         sourceLocationRange: Location(
             fullPath: filePathInRootDirectory,
             line: 10,
-            column: 1
+            column: 1,
         )
-        ... Location(
-            fullPath: filePathInRootDirectory,
-            line: 17,
-            column: 2
-        ),
+            ... Location(
+                fullPath: filePathInRootDirectory,
+                line: 17,
+                column: 2,
+            ),
         definitionUSRs: [
             counterViewModelUSR,
-            counterViewModelInitUSR
+            counterViewModelInitUSR,
         ],
         variables: [count],
-        functions: [increment]
+        functions: [increment],
     )
 
     let fileInRootDirectory = File(
         fullPath: filePathInRootDirectory,
         sourceCode: """
-            //
-            //  FileInRootDirectory.swift
-            //  Package
-            //
-            //  Created by Ockey on 2025/09/11.
-            //
+        //
+        //  FileInRootDirectory.swift
+        //  Package
+        //
+        //  Created by Ockey on 2025/09/11.
+        //
 
-            import SwiftUI
+        import SwiftUI
 
-            @Observable
-            class CounterViewModel {
-                var count = 0
+        @Observable
+        class CounterViewModel {
+            var count = 0
 
-                func increment() {
-                    count += 1
-                }
+            func increment() {
+                count += 1
             }
+        }
 
-            """,
-        abstractDeclarations: [counterViewModel]
+        """,
+        abstractDeclarations: [counterViewModel],
     )
 
     try await withDependencies {
@@ -172,28 +172,27 @@ func rootDirectoryClientTest() async throws {
             directory: Directory(
                 fullPath: rootDirectoryPath,
                 subDirectories: [subDirectory],
-                files: [fileInRootDirectory]
+                files: [fileInRootDirectory],
             ),
             keyPathTable: KeyPathTable(
                 directories: [
                     rootDirectoryPath: \.self,
-                    subDirectoryPath: \.?.subDirectories[id: subDirectoryPath]
+                    subDirectoryPath: \.?.subDirectories[id: subDirectoryPath],
                 ],
                 files: [
                     filePathInRootDirectory: \.?.files[id: filePathInRootDirectory],
-                    filePathInSubDirectory: \.?.subDirectories[id: subDirectoryPath]?.files[id: filePathInSubDirectory]
+                    filePathInSubDirectory: \.?.subDirectories[id: subDirectoryPath]?.files[id: filePathInSubDirectory],
                 ],
                 abstractDeclarations: [
                     counterViewModelUSR: \.?.files[id: filePathInRootDirectory]?.abstractDeclarations[id: counterViewModelID],
                     counterViewModelInitUSR: \.?.files[id: filePathInRootDirectory]?.abstractDeclarations[id: counterViewModelID],
                     countUSR: \.?.files[id: filePathInRootDirectory]?.abstractDeclarations[id: counterViewModelID]?.variables[id: countID],
                     incrementUSR: \.?.files[id: filePathInRootDirectory]?.abstractDeclarations[id: counterViewModelID]?.functions[id: incrementID],
-                    subCounterViewModelUSR: \.?.subDirectories[id: subDirectoryPath]?.files[id: filePathInSubDirectory]?.abstractDeclarations[id: subCounterViewModelID]
-                ]
-            )
+                    subCounterViewModelUSR: \.?.subDirectories[id: subDirectoryPath]?.files[id: filePathInSubDirectory]?.abstractDeclarations[id: subCounterViewModelID],
+                ],
+            ),
         )
 
         expectNoDifference(expectedResult, response)
     }
-
 }

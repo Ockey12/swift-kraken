@@ -29,12 +29,12 @@ func extractObjectFromTestData() throws {
         usrStore: USRStore(
             definitionUSRs: [:],
             referrerUSRs: [:],
-            referencedUSRs: [:]
+            referencedUSRs: [:],
         ),
         sourceLocationConverter: SourceLocationConverter(
             fileName: fileURL.path(),
-            tree: parsedCode
-        )
+            tree: parsedCode,
+        ),
     )
 
     withDependencies {
@@ -72,13 +72,11 @@ func extractObjectFromTestData() throws {
                     kind: .function,
                     sourceLocationRange: Location(fullPath: fullPath, line: 16, column: 1) ... Location(fullPath: fullPath, line: 16, column: 24),
                 ),
-            ]
+            ],
         )
 
         visitor.walk(parsedCode)
 
         expectNoDifference(expectedResult, visitor.result)
     }
-
-
 }
