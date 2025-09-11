@@ -51,8 +51,8 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
         var abstractDeclaration = AbstractDeclaration(
             id: uuid(),
             name: node.name.text,
-            sourceLocationRange: sourceLocationRange,
             kind: .struct,
+            sourceLocationRange: sourceLocationRange,
         )
 
         let nameLocation = node.name.startLocation(converter: sourceLocationConverter)
@@ -111,8 +111,8 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
         var abstractDeclaration = AbstractDeclaration(
             id: uuid(),
             name: node.name.text,
-            sourceLocationRange: sourceLocationRange,
             kind: .class,
+            sourceLocationRange: sourceLocationRange,
         )
 
         let nameLocation = node.name.startLocation(converter: sourceLocationConverter)
@@ -170,8 +170,8 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
         var abstractDeclaration = AbstractDeclaration(
             id: uuid(),
             name: node.name.text,
-            sourceLocationRange: sourceLocationRange,
             kind: .enum,
+            sourceLocationRange: sourceLocationRange,
         )
 
         let nameLocation = node.name.startLocation(converter: sourceLocationConverter)
@@ -234,8 +234,8 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
                 var abstractDeclaration = AbstractDeclaration(
                     id: uuid(),
                     name: identifier.identifier.text,
-                    sourceLocationRange: sourceLocationRange,
                     kind: .variable,
+                    sourceLocationRange: sourceLocationRange,
                 )
 
                 let nameLocation = identifier.identifier.startLocation(converter: sourceLocationConverter)
@@ -342,8 +342,8 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
         var abstractDeclaration = AbstractDeclaration(
             id: uuid(),
             name: node.name.text,
-            sourceLocationRange: sourceLocationRange,
             kind: .function,
+            sourceLocationRange: sourceLocationRange,
         )
 
         let nameLocation = node.name.startLocation(converter: sourceLocationConverter)

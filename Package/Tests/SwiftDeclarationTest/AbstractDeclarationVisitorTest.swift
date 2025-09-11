@@ -45,32 +45,32 @@ func extractObjectFromTestData() throws {
                 AbstractDeclaration(
                     id: UUID(uuidString: "00000000-0000-0000-0000-000000000000")!,
                     name: "EmptyStruct",
+                    kind: .struct,
                     sourceLocationRange: Location(fullPath: fullPath, line: 8, column: 1) ... Location(fullPath: fullPath, line: 8, column: 22),
-                    kind: .struct
                 ),
                 AbstractDeclaration(
                     id: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!,
                     name: "EmptyClass",
+                    kind: .class,
                     sourceLocationRange: Location(fullPath: fullPath, line: 10, column: 1) ... Location(fullPath: fullPath, line: 10, column: 20),
-                    kind: .class
                 ),
                 AbstractDeclaration(
                     id: UUID(uuidString: "00000000-0000-0000-0000-000000000002")!,
                     name: "EmptyEnum",
+                    kind: .enum,
                     sourceLocationRange: Location(fullPath: fullPath, line: 12, column: 1) ... Location(fullPath: fullPath, line: 12, column: 18),
-                    kind: .enum
                 ),
                 AbstractDeclaration(
                     id: UUID(uuidString: "00000000-0000-0000-0000-000000000003")!,
                     name: "emptyVariable",
+                    kind: .variable,
                     sourceLocationRange: Location(fullPath: fullPath, line: 14, column: 1) ... Location(fullPath: fullPath, line: 14, column: 22),
-                    kind: .variable
                 ),
                 AbstractDeclaration(
                     id: UUID(uuidString: "00000000-0000-0000-0000-000000000004")!,
                     name: "emptyFunction",
+                    kind: .function,
                     sourceLocationRange: Location(fullPath: fullPath, line: 16, column: 1) ... Location(fullPath: fullPath, line: 16, column: 24),
-                    kind: .function
                 ),
             ]
         )

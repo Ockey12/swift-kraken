@@ -10,6 +10,10 @@ let package = Package(
             name: "App",
             targets: ["App"],
         ),
+        .library(
+            name: "SwiftDeclaration",
+            targets: ["SwiftDeclaration"]
+        )
     ],
     dependencies: [
         .package(
@@ -55,8 +59,9 @@ let package = Package(
             name: "SwiftDeclaration",
             dependencies: [
                 "IndexStore",
-                "UUID",
                 .product(name: "IdentifiedCollections", package: "swift-identified-collections"),
+                .product(name: "Dependencies", package: "swift-dependencies"),
+                .product(name: "DependenciesMacros", package: "swift-dependencies"),
                 .product(name: "SwiftParser", package: "swift-syntax"),
                 .product(name: "SwiftSyntax", package: "swift-syntax"),
             ]
@@ -75,7 +80,7 @@ let package = Package(
             ],
         ),
         .testTarget(
-            name: "VisitorTest",
+            name: "SwiftDeclarationTest",
             dependencies: [
                 "IndexStore",
                 "Location",

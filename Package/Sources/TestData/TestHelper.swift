@@ -18,6 +18,16 @@ public enum TestHelper {
         return testDataDirectoryURL.appendingPathComponent(fileNameWithExtension)
     }
 
+    public static var rootDirectoryURL: URL {
+        // /swift-kraken/Package/Sources/TestData/TestHelper.swift
+        let currentFileURL = URL(filePath: #filePath)
+
+        // /swift-kraken/Package/Sources/TestData
+        let testDataDirectoryURL = currentFileURL.deletingLastPathComponent()
+
+        return testDataDirectoryURL.appending(path: "RootDirectory", directoryHint: .isDirectory)
+    }
+
     public static func findIndexStorePath() -> URL? {
         let homeDirectory = FileManager.default.homeDirectoryForCurrentUser
         let derivedDataDirectory = homeDirectory.appendingPathComponent("Library/Developer/Xcode/DerivedData")

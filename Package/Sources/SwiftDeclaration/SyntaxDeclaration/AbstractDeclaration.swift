@@ -48,6 +48,7 @@ struct AbstractDeclaration: Identifiable, Equatable, Hashable {
     init(
         id: UUID,
         name: String,
+        kind: Kind,
         sourceLocationRange: ClosedRange<Location>,
         definitionUSRs: Set<USR> = [],
         callersUSRs: Set<USR> = [],
@@ -58,7 +59,6 @@ struct AbstractDeclaration: Identifiable, Equatable, Hashable {
         nestingStructs: IdentifiedArrayOf<AbstractDeclaration> = [],
         nestingClasses: IdentifiedArrayOf<AbstractDeclaration> = [],
         nestingEnums: IdentifiedArrayOf<AbstractDeclaration> = [],
-        kind: Kind,
     ) {
         self.id = id
         self.name = name

@@ -7,7 +7,7 @@
 
 import IndexStore
 
-struct KeyPathTable {
+struct KeyPathTable: Equatable {
     var directories: [String: KeyPath<Directory?, Directory?>]
     var files: [String: KeyPath<Directory?, File?>]
     var abstractDeclarations: [USR: KeyPath<Directory?, AbstractDeclaration?>]
