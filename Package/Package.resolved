@@ -1,5 +1,5 @@
 {
-  "originHash" : "372ee4b60c70bccb1b4662689a550f32325bb5f0d376ac8619c5fc7cbd6b9c98",
+  "originHash" : "6c5fb4f1b0a52591a8fa113a94aea4a1da271368b5e09245b51125bb5e904cf3",
   "pins" : [
     {
       "identity" : "combine-schedulers",
@@ -98,15 +98,6 @@
       "state" : {
         "revision" : "f99ae8aa18f0cf0d53481901f88a0991dc3bd4a2",
         "version" : "601.0.1"
-      }
-    },
-    {
-      "identity" : "swiftformat",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/nicklockwood/SwiftFormat",
-      "state" : {
-        "revision" : "b83a8f132ff5430f3b6ff7d912baa407caea9e29",
-        "version" : "0.57.2"
       }
     },
     {

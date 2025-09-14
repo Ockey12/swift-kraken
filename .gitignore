@@ -1,4 +1,5 @@
 .build/
+buildServer.json
 .DS_Store
 xcuserdata/
 *.hmap

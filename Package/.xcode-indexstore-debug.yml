@@ -1,0 +1,7 @@
+reportType: warning
+filters:
+  - conditions:
+      - system: false
+excludedFiles:
+  - ".*/DerivedData/.*"
+  - "^(?!.*Package/Sources/TestData/).*"
