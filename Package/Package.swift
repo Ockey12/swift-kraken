@@ -67,6 +67,14 @@ let package = Package(
             ],
         ),
         .target(name: "TestData"),
+        .target(
+            name: "View",
+            dependencies: [
+                "Location",
+                "SwiftDeclaration",
+                .product(name: "IdentifiedCollections", package: "swift-identified-collections"),
+            ]
+        ),
         .testTarget(
             name: "IndexStoreTest",
             dependencies: [
