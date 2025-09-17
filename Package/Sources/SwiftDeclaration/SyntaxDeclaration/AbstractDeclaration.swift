@@ -10,42 +10,42 @@ import IdentifiedCollections
 import IndexStore
 import Location
 
-struct AbstractDeclaration: Identifiable, Equatable, Hashable {
-    let id: UUID
-    let name: String
-    let sourceLocationRange: ClosedRange<Location>
-    var definitionUSRs: Set<USR>
-    var callersUSRs: Set<USR>
-    var calleesUSRs: Set<USR>
+public struct AbstractDeclaration: Identifiable, Equatable, Hashable {
+    public let id: UUID
+    public let name: String
+    public let sourceLocationRange: ClosedRange<Location>
+    public var definitionUSRs: Set<USR>
+    public var callersUSRs: Set<USR>
+    public var calleesUSRs: Set<USR>
 
-    var variables: IdentifiedArrayOf<AbstractDeclaration>
-    var functions: IdentifiedArrayOf<AbstractDeclaration>
-    var cases: IdentifiedArrayOf<AbstractDeclaration>
+    public var variables: IdentifiedArrayOf<AbstractDeclaration>
+    public var functions: IdentifiedArrayOf<AbstractDeclaration>
+    public var cases: IdentifiedArrayOf<AbstractDeclaration>
 
-    var nestingStructs: IdentifiedArrayOf<AbstractDeclaration>
-    var nestingClasses: IdentifiedArrayOf<AbstractDeclaration>
-    var nestingEnums: IdentifiedArrayOf<AbstractDeclaration>
+    public var nestingStructs: IdentifiedArrayOf<AbstractDeclaration>
+    public var nestingClasses: IdentifiedArrayOf<AbstractDeclaration>
+    public var nestingEnums: IdentifiedArrayOf<AbstractDeclaration>
 
-    let kind: Kind
+    public let kind: Kind
 
-    var swiftDeclaration: SwiftDeclaration {
-        switch kind {
-        case .struct:
-            .struct(StructDeclaration.generate(from: self))
-        case .class:
-            .class(ClassDeclaration.generate(from: self))
-        case .enum:
-            .enum(EnumDeclaration.generate(from: self))
-        case .variable:
-            .variable(VariableDeclaration.generate(from: self))
-        case .function:
-            .function(FunctionDeclaration.generate(from: self))
-        case .case:
-            .case(CaseDeclaration.generate(from: self))
-        }
-    }
+//    var swiftDeclaration: SwiftDeclaration {
+//        switch kind {
+//        case .struct:
+//            .struct(StructDeclaration.generate(from: self))
+//        case .class:
+//            .class(ClassDeclaration.generate(from: self))
+//        case .enum:
+//            .enum(EnumDeclaration.generate(from: self))
+//        case .variable:
+//            .variable(VariableDeclaration.generate(from: self))
+//        case .function:
+//            .function(FunctionDeclaration.generate(from: self))
+//        case .case:
+//            .case(CaseDeclaration.generate(from: self))
+//        }
+//    }
 
-    init(
+    public init(
         id: UUID,
         name: String,
         kind: Kind,
@@ -94,7 +94,7 @@ struct AbstractDeclaration: Identifiable, Equatable, Hashable {
     }
 }
 
-extension AbstractDeclaration {
+public extension AbstractDeclaration {
     enum Kind {
         case `struct`
         case `class`
