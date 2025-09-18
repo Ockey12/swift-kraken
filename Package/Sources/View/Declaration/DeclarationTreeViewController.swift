@@ -129,7 +129,7 @@ extension DeclarationTreeViewController: NSOutlineViewDataSource {
             )
         }
 
-        return cellState.children[index]
+        return DeclarationCellState(declaration: cellState.children[index])
     }
 
     func outlineView(_ outlineView: NSOutlineView, isItemExpandable item: Any) -> Bool {
@@ -154,6 +154,7 @@ extension DeclarationTreeViewController: NSOutlineViewDelegate {
                 view?.identifier = Self.nameCellIdentifier
             }
             view?.configure(with: cellState)
+            return view
         }
 
         return nil
