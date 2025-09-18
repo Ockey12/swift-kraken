@@ -23,7 +23,7 @@ public struct RootDirectory: Equatable {
 import Foundation
 import Location
 
-extension RootDirectory {
+public extension RootDirectory {
     static var dummy: Self {
         // referrer
 

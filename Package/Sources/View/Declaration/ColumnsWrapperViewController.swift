@@ -34,11 +34,11 @@ final class ColumnsWrapperViewController: NSViewController {
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(scrollView)
 
-        columns = [ColumnState(roots: [DeclarationCellState.dummy], width: 450)]
+        columns = [ColumnState(roots: [], width: 450)]
 
         let initialController = DeclarationTreeViewController()
         initialController.view.frame = NSRect(x: 0, y: 0, width: 600, height: 800)
-        initialController.configure(rootCells: [DeclarationCellState.dummy])
+        initialController.configure(rootCells: [])
 //        initialController.onClidked = { [weak self, weak initialController] _ in
 //
 //        }
@@ -99,6 +99,30 @@ final class ColumnsWrapperViewController: NSViewController {
     // MARK: Columns management
 
     private func appendColumn(from _: DeclarationTreeViewController, with _: DeclarationCellState) {}
+
+    func display(declarations: [AbstractDeclaration]) {
+        if !isViewLoaded {
+            _ = view
+        }
+
+        let rootCells = declarations.map(DeclarationCellState.init)
+
+        if columns.isEmpty {
+            columns = [ColumnState(roots: rootCells, width: 450)]
+        } else {
+            columns[0].roots = rootCells
+        }
+
+        guard let controller = treeControllers.first else {
+            return
+        }
+
+        controller.configure(rootCells: rootCells)
+    }
+
+    func clearRootDeclarations() {
+        display(declarations: [])
+    }
 
     // MARK: Array state
 

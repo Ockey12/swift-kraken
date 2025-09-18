@@ -15,7 +15,7 @@ public struct File: Identifiable, Equatable, Hashable {
     public let fullPath: String
 
     public let sourceCode: String
-    var abstractDeclarations: IdentifiedArrayOf<AbstractDeclaration>
+    public internal(set) var abstractDeclarations: IdentifiedArrayOf<AbstractDeclaration>
 //    public var swiftDeclarations: IdentifiedArrayOf<SwiftDeclaration> {
 //        IdentifiedArray(
 //            uniqueElements:
