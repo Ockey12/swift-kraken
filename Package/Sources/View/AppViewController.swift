@@ -115,7 +115,11 @@ private final class FileTreeViewController: NSViewController {
     }
 
     override func loadView() {
-        view = NSView()
+        let effectView = NSVisualEffectView()
+        effectView.material = .sidebar
+        effectView.state = .active
+        effectView.blendingMode = .behindWindow
+        view = effectView
     }
 
     override func viewDidLoad() {
@@ -138,12 +142,14 @@ private final class FileTreeViewController: NSViewController {
         scrollView.hasHorizontalScroller = false
         scrollView.autohidesScrollers = true
         scrollView.borderType = .noBorder
+        scrollView.drawsBackground = false
 
         outlineView.dataSource = self
         outlineView.delegate = self
         outlineView.headerView = nil
         outlineView.columnAutoresizingStyle = .firstColumnOnlyAutoresizingStyle
         outlineView.usesAlternatingRowBackgroundColors = false
+        outlineView.backgroundColor = .clear
         outlineView.allowsMultipleSelection = false
         outlineView.allowsEmptySelection = true
         outlineView.rowSizeStyle = .default
