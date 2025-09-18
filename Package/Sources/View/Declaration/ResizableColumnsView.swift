@@ -193,10 +193,12 @@ final class ResizableColumnsView: NSView {
     /// The index corresponds to the column adjacent on the left of this divider.
     private func dividerRect(at index: Int) -> NSRect {
         var x: CGFloat = 0
-        for i in 0...index {
+        for i in 0 ... index {
             let width = isAdjustmentColumn(i) ? max(0, columns[i].width) : max(minColumnWidth, columns[i].width)
             x += width
-            if i < index { x += dividerWidth}
+            if i < index {
+                x += dividerWidth
+            }
         }
         return NSRect(x: x, y: 0, width: dividerWidth, height: bounds.height)
     }
@@ -206,7 +208,7 @@ final class ResizableColumnsView: NSView {
             return nil
         }
 
-        for i in 0..<(columns.count - 1) {
+        for i in 0 ..< (columns.count - 1) {
             // Expand the hitbox by 2 units to the left and right beyond the visual bounds.
             if dividerRect(at: i).insetBy(dx: -2, dy: 0).contains(point) {
                 return i
@@ -219,7 +221,7 @@ final class ResizableColumnsView: NSView {
         super.draw(dirtyRect)
         dividerColor.setFill()
         if columns.count >= 2 {
-            for i in 0..<(columns.count - 1) {
+            for i in 0 ..< (columns.count - 1) {
                 dividerRect(at: i).fill()
             }
         }
@@ -235,7 +237,7 @@ final class ResizableColumnsView: NSView {
     override func resetCursorRects() {
         super.resetCursorRects()
         if columns.count >= 2 {
-            for i in 0..<(columns.count - 1) {
+            for i in 0 ..< (columns.count - 1) {
                 addCursorRect(dividerRect(at: i), cursor: .columnResize)
             }
         }
@@ -290,7 +292,7 @@ final class ResizableColumnsView: NSView {
         needsDisplay = true
     }
 
-    override func mouseUp(with event: NSEvent) {
+    override func mouseUp(with _: NSEvent) {
         draggingDividerIndex = nil
     }
 
@@ -302,7 +304,7 @@ final class ResizableColumnsView: NSView {
         }
 
         var x: CGFloat = 0
-        for i in 0..<index {
+        for i in 0 ..< index {
             let width = isAdjustmentColumn(i) ? max(0, columns[i].width) : max(minColumnWidth, columns[i].width)
             x += width + dividerWidth
         }
@@ -322,13 +324,13 @@ private final class ColumnContainerView: NSView {
     let contentContainerView: NSView
 
     init(contentView: NSView) {
-        self.contentContainerView = NSView()
+        contentContainerView = NSView()
         super.init(frame: .zero)
         setup(contentView: contentView)
     }
 
     required init?(coder: NSCoder) {
-        self.contentContainerView = NSView()
+        contentContainerView = NSView()
         super.init(coder: coder)
         setup(contentView: NSView())
     }
@@ -344,7 +346,7 @@ private final class ColumnContainerView: NSView {
     override func layout() {
         super.layout()
 
-        let bounds = self.bounds
+        let bounds = bounds
         contentContainerView.frame = NSRect(x: 0, y: 0, width: bounds.width, height: bounds.height)
 
         if let contentView = contentContainerView.subviews.first {

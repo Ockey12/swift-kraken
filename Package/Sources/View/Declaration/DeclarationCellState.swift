@@ -40,8 +40,8 @@ struct DeclarationCellState: Identifiable {
     }
 }
 
-import Location
 import IndexStore
+import Location
 
 extension DeclarationCellState {
     static var dummy: Self {
@@ -54,8 +54,8 @@ extension DeclarationCellState {
             name: "referrerDeclaration",
             kind: .struct,
             sourceLocationRange: Location(fullPath: referrerFilePath, line: 1, column: 1)
-            ... Location(fullPath: referrerFilePath, line: 4, column: 1),
-            definitionUSRs: [referrerStructUSR]
+                ... Location(fullPath: referrerFilePath, line: 4, column: 1),
+            definitionUSRs: [referrerStructUSR],
         )
 
         let referrerMethodID = UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
@@ -65,8 +65,8 @@ extension DeclarationCellState {
             name: "referrerMethod",
             kind: .function,
             sourceLocationRange: Location(fullPath: referrerFilePath, line: 2, column: 1)
-            ... Location(fullPath: referrerFilePath, line: 3, column: 1),
-            definitionUSRs: [referrerMethodUSR]
+                ... Location(fullPath: referrerFilePath, line: 3, column: 1),
+            definitionUSRs: [referrerMethodUSR],
         )
         referrerStruct.functions.append(referrerMethod)
 

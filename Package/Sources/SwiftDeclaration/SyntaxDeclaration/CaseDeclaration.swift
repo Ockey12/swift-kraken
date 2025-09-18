@@ -5,10 +5,10 @@
 ////  Created by Ockey on 2025/09/09.
 ////
 //
-//import Foundation
-//import Location
+// import Foundation
+// import Location
 //
-//public struct CaseDeclaration: Declaration, Equatable {
+// public struct CaseDeclaration: Declaration, Equatable {
 //    public let id: UUID
 //    public let name: String
 //    public let sourceLocationRange: ClosedRange<Location>
@@ -23,4 +23,4 @@
 //            sourceLocationRange: abstractDeclaration.sourceLocationRange,
 //        )
 //    }
-//}
+// }

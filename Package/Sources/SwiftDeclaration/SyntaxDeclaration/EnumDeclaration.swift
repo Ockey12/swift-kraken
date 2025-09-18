@@ -5,11 +5,11 @@
 ////  Created by Ockey on 2025/09/09.
 ////
 //
-//import Foundation
-//import IdentifiedCollections
-//import Location
+// import Foundation
+// import IdentifiedCollections
+// import Location
 //
-//public struct EnumDeclaration: Declaration, Equatable {
+// public struct EnumDeclaration: Declaration, Equatable {
 //    public let id: UUID
 //    public let name: String
 //    public let sourceLocationRange: ClosedRange<Location>
@@ -38,4 +38,4 @@
 //            nestingEnums: IdentifiedArray(uniqueElements: abstractDeclaration.nestingEnums.map { EnumDeclaration.generate(from: $0) }),
 //        )
 //    }
-//}
+// }

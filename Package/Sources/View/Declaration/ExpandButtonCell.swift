@@ -30,7 +30,7 @@ final class ExpandButtonCell: NSTableCellView {
             button.trailingAnchor.constraint(equalTo: trailingAnchor),
             button.centerYAnchor.constraint(equalTo: centerYAnchor),
             button.widthAnchor.constraint(equalToConstant: 24),
-            button.heightAnchor.constraint(equalToConstant: 24)
+            button.heightAnchor.constraint(equalToConstant: 24),
         ])
     }
 

@@ -76,11 +76,11 @@ final class DeclarationTreeViewController: NSViewController {
         }
     }
 
-    @objc private func onRowClicked(_ sender: Any?) {}
+    @objc private func onRowClicked(_: Any?) {}
 }
 
 extension DeclarationTreeViewController: NSOutlineViewDataSource {
-    func outlineView(_ outlineView: NSOutlineView, numberOfChildrenOfItem item: Any?) -> Int {
+    func outlineView(_: NSOutlineView, numberOfChildrenOfItem item: Any?) -> Int {
         guard let item else {
             return rootCells.count
         }
@@ -91,9 +91,9 @@ extension DeclarationTreeViewController: NSOutlineViewDataSource {
         return cellState.children.count
     }
 
-    func outlineView(_ outlineView: NSOutlineView, child index: Int, ofItem item: Any?) -> Any {
+    func outlineView(_: NSOutlineView, child index: Int, ofItem item: Any?) -> Any {
         guard let item else {
-            if (0..<rootCells.count).contains(index) {
+            if (0 ..< rootCells.count).contains(index) {
                 return rootCells[index]
             } else {
                 return DeclarationCellState(
@@ -101,8 +101,8 @@ extension DeclarationTreeViewController: NSOutlineViewDataSource {
                         id: UUID(),
                         name: "",
                         kind: .struct,
-                        sourceLocationRange: Location(fullPath: "", line: 0, column: 0)...Location(fullPath: "", line: 0, column: 1)
-                    )
+                        sourceLocationRange: Location(fullPath: "", line: 0, column: 0) ... Location(fullPath: "", line: 0, column: 1),
+                    ),
                 )
             }
         }
@@ -113,26 +113,26 @@ extension DeclarationTreeViewController: NSOutlineViewDataSource {
                     id: UUID(),
                     name: "",
                     kind: .struct,
-                    sourceLocationRange: Location(fullPath: "", line: 0, column: 0)...Location(fullPath: "", line: 0, column: 1)
-                )
+                    sourceLocationRange: Location(fullPath: "", line: 0, column: 0) ... Location(fullPath: "", line: 0, column: 1),
+                ),
             )
         }
 
-        guard (0..<cellState.children.count).contains(index) else {
+        guard (0 ..< cellState.children.count).contains(index) else {
             return DeclarationCellState(
                 declaration: AbstractDeclaration(
                     id: UUID(),
                     name: "",
                     kind: .struct,
-                    sourceLocationRange: Location(fullPath: "", line: 0, column: 0)...Location(fullPath: "", line: 0, column: 1)
-                )
+                    sourceLocationRange: Location(fullPath: "", line: 0, column: 0) ... Location(fullPath: "", line: 0, column: 1),
+                ),
             )
         }
 
         return DeclarationCellState(declaration: cellState.children[index])
     }
 
-    func outlineView(_ outlineView: NSOutlineView, isItemExpandable item: Any) -> Bool {
+    func outlineView(_: NSOutlineView, isItemExpandable item: Any) -> Bool {
         guard let cellState = item as? DeclarationCellState else {
             return false
         }

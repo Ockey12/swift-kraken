@@ -5,9 +5,9 @@
 ////  Created by Ockey on 2025/09/09.
 ////
 //
-//import Foundation
+// import Foundation
 //
-//public enum SwiftDeclaration: Identifiable, Equatable {
+// public enum SwiftDeclaration: Identifiable, Equatable {
 //    case `struct`(StructDeclaration)
 //    case `class`(ClassDeclaration)
 //    case `enum`(EnumDeclaration)
@@ -31,4 +31,4 @@
 //            caseDeclaration.id
 //        }
 //    }
-//}
+// }

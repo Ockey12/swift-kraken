@@ -36,8 +36,8 @@ extension RootDirectory {
             name: "referrerDeclaration",
             kind: .struct,
             sourceLocationRange: Location(fullPath: referrerFilePath, line: 1, column: 1)
-            ... Location(fullPath: referrerFilePath, line: 4, column: 1),
-            definitionUSRs: [referrerStructUSR]
+                ... Location(fullPath: referrerFilePath, line: 4, column: 1),
+            definitionUSRs: [referrerStructUSR],
         )
 
         let referrerMethodID = UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
@@ -47,14 +47,14 @@ extension RootDirectory {
             name: "referrerMethod",
             kind: .function,
             sourceLocationRange: Location(fullPath: referrerFilePath, line: 2, column: 1)
-            ... Location(fullPath: referrerFilePath, line: 3, column: 1),
-            definitionUSRs: [referrerMethodUSR]
+                ... Location(fullPath: referrerFilePath, line: 3, column: 1),
+            definitionUSRs: [referrerMethodUSR],
         )
         referrerStruct.functions.append(referrerMethod)
         let referrerFile = File(
             fullPath: referrerFilePath,
             sourceCode: "",
-            abstractDeclarations: [referrerStruct]
+            abstractDeclarations: [referrerStruct],
         )
 
         // referenced
@@ -68,8 +68,8 @@ extension RootDirectory {
             name: "referencedDeclaration",
             kind: .struct,
             sourceLocationRange: Location(fullPath: referencedFilePath, line: 1, column: 1)
-            ... Location(fullPath: referencedFilePath, line: 4, column: 1),
-            definitionUSRs: [referencedStructUSR]
+                ... Location(fullPath: referencedFilePath, line: 4, column: 1),
+            definitionUSRs: [referencedStructUSR],
         )
 
         let referencedMethodID = UUID(uuidString: "00000000-0000-0000-0000-000000000003")!
@@ -79,15 +79,15 @@ extension RootDirectory {
             name: "referencedMethod",
             kind: .function,
             sourceLocationRange: Location(fullPath: referencedFilePath, line: 2, column: 1)
-            ... Location(fullPath: referencedFilePath, line: 3, column: 1),
-            definitionUSRs: [referencedMethodUSR]
+                ... Location(fullPath: referencedFilePath, line: 3, column: 1),
+            definitionUSRs: [referencedMethodUSR],
         )
         referencedStruct.functions.append(referencedMethod)
 
         let referencedFile = File(
             fullPath: referencedFilePath,
             sourceCode: "",
-            abstractDeclarations: [referencedStruct]
+            abstractDeclarations: [referencedStruct],
         )
 
         // root directory
@@ -98,7 +98,7 @@ extension RootDirectory {
             files: [
                 referrerFile,
                 referencedFile,
-            ]
+            ],
         )
 
         // KeyPath
@@ -115,14 +115,14 @@ extension RootDirectory {
             directories: ["": rootDirectoryKeyPath],
             files: [
                 referrerFilePath: referrerFileKeyPath,
-                referencedFilePath: referencedFileKeyPath
+                referencedFilePath: referencedFileKeyPath,
             ],
             abstractDeclarations: [
                 referrerStructUSR: referrerStructKeyPath,
                 referrerMethodUSR: referrerMethodKeyPath,
                 referencedStructUSR: referencedStructKeyPath,
-                referencedMethodUSR: referencedMethodKeyPath
-            ]
+                referencedMethodUSR: referencedMethodKeyPath,
+            ],
         )
 
         return RootDirectory(directory: directory, keyPathTable: keyPathTable)

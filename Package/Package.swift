@@ -16,8 +16,8 @@ let package = Package(
         ),
         .library(
             name: "View",
-            targets: ["View"]
-        )
+            targets: ["View"],
+        ),
     ],
     dependencies: [
         .package(
@@ -49,8 +49,8 @@ let package = Package(
         .target(
             name: "App",
             dependencies: [
-                "View"
-            ]
+                "View",
+            ],
         ),
         .target(
             name: "IndexStore",
@@ -80,7 +80,7 @@ let package = Package(
                 "Location",
                 "SwiftDeclaration",
                 .product(name: "IdentifiedCollections", package: "swift-identified-collections"),
-            ]
+            ],
         ),
         .testTarget(
             name: "IndexStoreTest",

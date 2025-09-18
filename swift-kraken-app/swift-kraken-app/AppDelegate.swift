@@ -6,8 +6,8 @@
 //
 
 import App
-import View
 import Cocoa
+import View
 
 @main
 class AppDelegate: NSObject, NSApplicationDelegate {

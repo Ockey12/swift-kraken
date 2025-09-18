@@ -35,7 +35,7 @@ final class NameCell: NSTableCellView {
         NSLayoutConstraint.activate([
             textField.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 4),
             textField.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -4),
-            textField.centerYAnchor.constraint(equalTo: centerYAnchor)
+            textField.centerYAnchor.constraint(equalTo: centerYAnchor),
         ])
     }
 

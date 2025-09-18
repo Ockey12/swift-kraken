@@ -58,7 +58,7 @@ final class ColumnsWrapperViewController: NSViewController {
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.topAnchor.constraint(equalTo: view.topAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
         ])
     }
 
@@ -98,9 +98,7 @@ final class ColumnsWrapperViewController: NSViewController {
 
     // MARK: Columns management
 
-    private func appendColumn(from controller: DeclarationTreeViewController, with cell: DeclarationCellState) {
-
-    }
+    private func appendColumn(from _: DeclarationTreeViewController, with _: DeclarationCellState) {}
 
     // MARK: Array state
 
