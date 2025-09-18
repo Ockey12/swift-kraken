@@ -6,6 +6,7 @@
 //
 
 import App
+import View
 import Cocoa
 
 @main

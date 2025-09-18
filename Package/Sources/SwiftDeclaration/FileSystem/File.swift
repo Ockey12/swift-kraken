@@ -16,12 +16,12 @@ public struct File: Identifiable, Equatable, Hashable {
 
     public let sourceCode: String
     var abstractDeclarations: IdentifiedArrayOf<AbstractDeclaration>
-    public var swiftDeclarations: IdentifiedArrayOf<SwiftDeclaration> {
-        IdentifiedArray(
-            uniqueElements:
-            abstractDeclarations.map(\.swiftDeclaration),
-        )
-    }
+//    public var swiftDeclarations: IdentifiedArrayOf<SwiftDeclaration> {
+//        IdentifiedArray(
+//            uniqueElements:
+//            abstractDeclarations.map(\.swiftDeclaration),
+//        )
+//    }
 
     func generateKeyPath(fromRootDirectory keyPath: KeyPath<Directory?, File?>) -> KeyPathTable {
         var table = KeyPathTable(directories: [:], files: [:], abstractDeclarations: [:])

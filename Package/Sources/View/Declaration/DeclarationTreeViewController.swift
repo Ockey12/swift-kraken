@@ -9,11 +9,13 @@ import AppKit
 import Location
 import SwiftDeclaration
 
-@MainActor
 final class DeclarationTreeViewController: NSViewController {
     private var rootCells: [DeclarationCellState] = []
     private var scrollView: NSScrollView!
     private var outlineView: NSOutlineView!
+
+    var onClidked: ((DeclarationCellState) -> Void)?
+    var onSelectionChanged: ((DeclarationCellState) -> Void)?
 
     private static let nameColumnIdentifier = NSUserInterfaceItemIdentifier("NameColumn")
     private static let nameCellIdentifier = NSUserInterfaceItemIdentifier("NameCell")
@@ -65,6 +67,13 @@ final class DeclarationTreeViewController: NSViewController {
             scrollView.topAnchor.constraint(equalTo: view.topAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
         ])
+    }
+
+    func configure(rootCells: [DeclarationCellState]) {
+        self.rootCells = rootCells
+        if isViewLoaded {
+            outlineView.reloadData()
+        }
     }
 
     @objc private func onRowClicked(_ sender: Any?) {}

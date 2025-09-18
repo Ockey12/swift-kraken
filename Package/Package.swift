@@ -14,6 +14,10 @@ let package = Package(
             name: "SwiftDeclaration",
             targets: ["SwiftDeclaration"],
         ),
+        .library(
+            name: "View",
+            targets: ["View"]
+        )
     ],
     dependencies: [
         .package(
@@ -44,6 +48,9 @@ let package = Package(
     targets: [
         .target(
             name: "App",
+            dependencies: [
+                "View"
+            ]
         ),
         .target(
             name: "IndexStore",

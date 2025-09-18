@@ -39,3 +39,37 @@ struct DeclarationCellState: Identifiable {
         !children.isEmpty
     }
 }
+
+import Location
+import IndexStore
+
+extension DeclarationCellState {
+    static var dummy: Self {
+        let referrerFilePath = "rootDirectory/referrerFile.swift"
+
+        let referrerStructID = UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
+        let referrerStructUSR = USR("referrerDeclaration")
+        var referrerStruct = AbstractDeclaration(
+            id: referrerStructID,
+            name: "referrerDeclaration",
+            kind: .struct,
+            sourceLocationRange: Location(fullPath: referrerFilePath, line: 1, column: 1)
+            ... Location(fullPath: referrerFilePath, line: 4, column: 1),
+            definitionUSRs: [referrerStructUSR]
+        )
+
+        let referrerMethodID = UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
+        let referrerMethodUSR = USR("referrerMethod")
+        let referrerMethod = AbstractDeclaration(
+            id: referrerMethodID,
+            name: "referrerMethod",
+            kind: .function,
+            sourceLocationRange: Location(fullPath: referrerFilePath, line: 2, column: 1)
+            ... Location(fullPath: referrerFilePath, line: 3, column: 1),
+            definitionUSRs: [referrerMethodUSR]
+        )
+        referrerStruct.functions.append(referrerMethod)
+
+        return DeclarationCellState(declaration: referrerStruct)
+    }
+}

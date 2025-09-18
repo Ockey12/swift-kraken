@@ -8,6 +8,16 @@
 import AppKit
 
 final class NameCell: NSTableCellView {
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        setupView()
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        setupView()
+    }
+
     private func setupView() {
         let textField = NSTextField()
         textField.isEditable = false
