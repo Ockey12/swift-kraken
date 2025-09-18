@@ -144,7 +144,6 @@ private final class FileTreeViewController: NSViewController {
         outlineView.headerView = nil
         outlineView.columnAutoresizingStyle = .firstColumnOnlyAutoresizingStyle
         outlineView.usesAlternatingRowBackgroundColors = false
-        outlineView.selectionHighlightStyle = .regular
         outlineView.allowsMultipleSelection = false
         outlineView.allowsEmptySelection = true
         outlineView.rowSizeStyle = .default
