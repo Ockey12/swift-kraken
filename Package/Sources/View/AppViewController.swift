@@ -278,9 +278,9 @@ private final class FileSystemNode: NSObject {
     var displayName: String {
         switch content {
         case let .directory(directory):
-            return FileSystemNode.lastPathComponent(from: directory.fullPath)
+            FileSystemNode.lastPathComponent(from: directory.fullPath)
         case let .file(file):
-            return FileSystemNode.lastPathComponent(from: file.fullPath)
+            FileSystemNode.lastPathComponent(from: file.fullPath)
         }
     }
 
@@ -294,9 +294,9 @@ private final class FileSystemNode: NSObject {
     private var hasChildren: Bool {
         switch content {
         case let .directory(directory):
-            return !directory.subDirectories.isEmpty || !directory.files.isEmpty
+            !directory.subDirectories.isEmpty || !directory.files.isEmpty
         case .file:
-            return false
+            false
         }
     }
 

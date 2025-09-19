@@ -54,7 +54,9 @@ final class ColumnsWrapperViewController: NSViewController {
     }
 
     private func syncDocumentHeightToVisible() {
-        guard let resizableView else { return }
+        guard let resizableView else {
+            return
+        }
 
         let visibleHeight = max(1, scrollView.contentSize.height)
         if resizableView.frame.size.height != visibleHeight {
