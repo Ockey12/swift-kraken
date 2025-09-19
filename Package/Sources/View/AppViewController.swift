@@ -57,6 +57,7 @@ public final class AppViewController: NSSplitViewController {
         sidebarItem.minimumThickness = 250
         sidebarItem.maximumThickness = 800
         sidebarItem.canCollapse = true
+        sidebarItem.allowsFullHeightLayout = true
         sidebarSplitViewItem = sidebarItem
 
         let contentItem = NSSplitViewItem(viewController: columnsWrapperViewController)

@@ -57,11 +57,11 @@ final class MainWindowController: NSWindowController, NSToolbarDelegate {
     // MARK: NSToolbarDelegate (start with items that sit next to the traffic lights)
 
     func toolbarAllowedItemIdentifiers(_: NSToolbar) -> [NSToolbarItem.Identifier] {
-        [.navGroup]
+        []
     }
 
     func toolbarDefaultItemIdentifiers(_: NSToolbar) -> [NSToolbarItem.Identifier] {
-        [.navGroup]
+        [.toggleSidebar, .sidebarTrackingSeparator, .flexibleSpace, .centerTitle, .flexibleSpace]
     }
 
     func toolbar(
@@ -70,26 +70,30 @@ final class MainWindowController: NSWindowController, NSToolbarDelegate {
         willBeInsertedIntoToolbar _: Bool,
     ) -> NSToolbarItem? {
         switch id {
-        case .navGroup:
-            let toggleSidebarBtn: NSButton
-            if #available(macOS 11.0, *) {
-                let image = NSImage(systemSymbolName: "sidebar.left", accessibilityDescription: "Toggle Sidebar")
-                    ?? NSImage(named: NSImage.touchBarSidebarTemplateName)
-                    ?? NSImage()
-                toggleSidebarBtn = NSButton(image: image, target: self, action: #selector(toggleSidebar))
-                toggleSidebarBtn.imageScaling = .scaleProportionallyDown
-            } else {
-                toggleSidebarBtn = NSButton(title: "☰", target: self, action: #selector(toggleSidebar))
-            }
-            toggleSidebarBtn.bezelStyle = .toolbar
-            toggleSidebarBtn.toolTip = "Toggle File Tree"
+        case .sidebarTrackingSeparator:
+            return NSToolbarItem(itemIdentifier: id)
 
-            let stack = NSStackView(views: [toggleSidebarBtn])
-            stack.orientation = .horizontal
-            stack.spacing = 4
+        case .centerTitle:
+            let label = NSTextField(labelWithString: "Swift")
+            label.font = NSFont.systemFont(ofSize: NSFont.systemFontSize(for: .large), weight: .semibold)
+            label.alignment = .center
+            label.textColor = NSColor.labelColor
+            label.translatesAutoresizingMaskIntoConstraints = false
+            label.setContentHuggingPriority(.required, for: .horizontal)
+            label.setContentHuggingPriority(.defaultHigh, for: .vertical)
+
+            let container = NSView()
+            container.translatesAutoresizingMaskIntoConstraints = false
+            container.addSubview(label)
+
+            NSLayoutConstraint.activate([
+                label.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+                label.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+                container.heightAnchor.constraint(equalToConstant: 32),
+            ])
 
             let item = NSToolbarItem(itemIdentifier: id)
-            item.view = stack
+            item.view = container
             return item
 
         default:
@@ -101,4 +105,5 @@ final class MainWindowController: NSWindowController, NSToolbarDelegate {
 private extension NSToolbar.Identifier { static let mainToolbar = NSToolbar.Identifier("MainToolbar") }
 private extension NSToolbarItem.Identifier {
     static let navGroup = NSToolbarItem.Identifier("NavGroup")
+    static let centerTitle = NSToolbarItem.Identifier("CenterTitle")
 }
