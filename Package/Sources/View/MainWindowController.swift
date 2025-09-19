@@ -25,9 +25,7 @@ final class MainWindowController: NSWindowController, NSToolbarDelegate {
         w.titleVisibility = .hidden
         w.titlebarAppearsTransparent = true
         w.styleMask.insert(.fullSizeContentView)
-        if #available(macOS 11.0, *) {
-            w.toolbarStyle = .unifiedCompact
-        }
+        w.toolbarStyle = .unified
 
         // Toolbar (same row as the window controls)
         let tb = NSToolbar(identifier: .mainToolbar)
@@ -35,17 +33,6 @@ final class MainWindowController: NSWindowController, NSToolbarDelegate {
         tb.displayMode = .iconOnly
         tb.allowsUserCustomization = true
         w.toolbar = tb
-
-        // Without setting constraints, the content ends up underneath the toolbar.
-        if let guide = w.contentLayoutGuide as? NSLayoutGuide, let contentView = w.contentView {
-            contentView.translatesAutoresizingMaskIntoConstraints = false
-            NSLayoutConstraint.activate([
-                contentView.topAnchor.constraint(equalTo: guide.topAnchor),
-                contentView.leadingAnchor.constraint(equalTo: guide.leadingAnchor),
-                contentView.trailingAnchor.constraint(equalTo: guide.trailingAnchor),
-                contentView.bottomAnchor.constraint(equalTo: guide.bottomAnchor),
-            ])
-        }
     }
 
     // MARK: Actions (bridging into the view controller)
@@ -71,7 +58,11 @@ final class MainWindowController: NSWindowController, NSToolbarDelegate {
     ) -> NSToolbarItem? {
         switch id {
         case .sidebarTrackingSeparator:
-            return NSToolbarItem(itemIdentifier: id)
+            return NSTrackingSeparatorToolbarItem(
+                identifier: .sidebarTrackingSeparator,
+                splitView: appViewController.splitView,
+                dividerIndex: 0,
+            )
 
         case .centerTitle:
             let label = NSTextField(labelWithString: "Swift")
