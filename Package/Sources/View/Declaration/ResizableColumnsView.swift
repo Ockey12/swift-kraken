@@ -18,6 +18,14 @@ final class ResizableColumnsView: NSView {
     private var dividerColor: NSColor = .separatorColor
     private var columnContainers: [ColumnContainerView] = []
     private let minColumnWidth: CGFloat = 300
+    private let clipMaskLayer = CAShapeLayer()
+    private var topClipHeight: CGFloat = 0 {
+        didSet {
+            if abs(oldValue - topClipHeight) > .ulpOfOne {
+                updateClipMask()
+            }
+        }
+    }
 
     private var draggingDividerIndex: Int?
     private var dragStartLocationX: CGFloat = 0
@@ -31,8 +39,10 @@ final class ResizableColumnsView: NSView {
         super.init(frame: .zero)
 
         wantsLayer = true
+        layer?.masksToBounds = false
         setupSubviews()
         ensureTrailingAdjustmentColumn()
+        updateClipMask()
     }
 
     required init?(coder: NSCoder) {
@@ -147,6 +157,7 @@ final class ResizableColumnsView: NSView {
     override func layout() {
         super.layout()
         layoutColumns()
+        updateClipMask()
     }
 
     private func layoutColumns() {
@@ -317,6 +328,30 @@ final class ResizableColumnsView: NSView {
             return nil
         }
         return isAdjustmentColumn(index) ? max(0, columns[index].width) : max(minColumnWidth, columns[index].width)
+    }
+
+    func updateTopClipHeight(_ value: CGFloat) {
+        let clamped = max(0, value)
+        if abs(clamped - topClipHeight) > .ulpOfOne {
+            topClipHeight = clamped
+        }
+    }
+
+    // Apply a mask so the vertical divider doesn’t overlap the toolbar.
+    private func updateClipMask() {
+        guard let backingLayer = layer else {
+            return
+        }
+
+        let visibleStart = min(max(0, topClipHeight), backingLayer.bounds.height)
+        let visibleHeight = max(0, backingLayer.bounds.height - visibleStart)
+
+        clipMaskLayer.frame = backingLayer.bounds
+        let path = CGMutablePath()
+        path.addRect(CGRect(x: 0, y: visibleStart, width: backingLayer.bounds.width, height: visibleHeight))
+        clipMaskLayer.path = path
+        clipMaskLayer.fillColor = NSColor.white.cgColor
+        backingLayer.mask = clipMaskLayer
     }
 }
 

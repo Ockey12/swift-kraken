@@ -138,6 +138,7 @@ final class ColumnsWrapperViewController: NSViewController {
         resizableView.frame = NSRect(x: 0, y: 0, width: initialWidth, height: initialHeight)
         scrollView.documentView = resizableView
         self.resizableView = resizableView
+        resizableView.updateTopClipHeight(scrollView.contentInsets.top)
         refreshLayout()
     }
 
