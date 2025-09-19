@@ -11,6 +11,7 @@ public final class AppViewController: NSSplitViewController {
 
     private let fileTreeViewController: FileTreeViewController
     private let columnsWrapperViewController: ColumnsWrapperViewController
+    private var sidebarSplitViewItem: NSSplitViewItem?
     private var didSetInitialSidebarWidth = false
 
     public init(rootDirectory: RootDirectory) {
@@ -55,7 +56,8 @@ public final class AppViewController: NSSplitViewController {
         let sidebarItem = NSSplitViewItem(sidebarWithViewController: fileTreeViewController)
         sidebarItem.minimumThickness = 250
         sidebarItem.maximumThickness = 800
-        sidebarItem.canCollapse = false
+        sidebarItem.canCollapse = true
+        sidebarSplitViewItem = sidebarItem
 
         let contentItem = NSSplitViewItem(viewController: columnsWrapperViewController)
 
@@ -73,6 +75,19 @@ public final class AppViewController: NSSplitViewController {
 
         splitView.setPosition(300, ofDividerAt: 0)
         didSetInitialSidebarWidth = true
+    }
+
+    public func toggleSidebarVisibility() {
+        if !isViewLoaded {
+            _ = view
+        }
+
+        guard let sidebarItem = sidebarSplitViewItem else {
+            return
+        }
+
+        let shouldCollapse = !sidebarItem.isCollapsed
+        sidebarItem.animator().isCollapsed = shouldCollapse
     }
 
     private func configureCallbacks() {

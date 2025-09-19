@@ -36,14 +36,6 @@ final class MainWindowController: NSWindowController, NSToolbarDelegate {
         tb.allowsUserCustomization = true
         w.toolbar = tb
 
-        // Optional buttons that should stay on the right side
-        let acc = NSTitlebarAccessoryViewController()
-        acc.layoutAttribute = .right
-        let runButton = NSButton(title: "Run", target: self, action: #selector(run))
-        runButton.bezelStyle = .toolbar
-        acc.view = runButton
-        w.addTitlebarAccessoryViewController(acc)
-
         // Without setting constraints, the content ends up underneath the toolbar.
         if let guide = w.contentLayoutGuide as? NSLayoutGuide, let contentView = w.contentView {
             contentView.translatesAutoresizingMaskIntoConstraints = false
@@ -58,18 +50,18 @@ final class MainWindowController: NSWindowController, NSToolbarDelegate {
 
     // MARK: Actions (bridging into the view controller)
 
-    @objc private func back() { /* (contentViewController as? MainViewController)?.goBack()*/ }
-    @objc private func forward() { /* (contentViewController as? MainViewController)?.goForward() */ }
-    @objc private func run() { /* (contentViewController as? MainViewController)?.runSomething() */ }
+    @objc private func toggleSidebar() {
+        appViewController.toggleSidebarVisibility()
+    }
 
     // MARK: NSToolbarDelegate (start with items that sit next to the traffic lights)
 
     func toolbarAllowedItemIdentifiers(_: NSToolbar) -> [NSToolbarItem.Identifier] {
-        [.navGroup, .flexibleSpace, .searchItem]
+        [.navGroup]
     }
 
     func toolbarDefaultItemIdentifiers(_: NSToolbar) -> [NSToolbarItem.Identifier] {
-        [.navGroup, .flexibleSpace, .searchItem]
+        [.navGroup]
     }
 
     func toolbar(
@@ -79,23 +71,25 @@ final class MainWindowController: NSWindowController, NSToolbarDelegate {
     ) -> NSToolbarItem? {
         switch id {
         case .navGroup:
-            let backBtn = NSButton(title: "◀︎", target: self, action: #selector(back))
-            backBtn.bezelStyle = .toolbar
-            let fwdBtn = NSButton(title: "▶︎", target: self, action: #selector(forward))
-            fwdBtn.bezelStyle = .toolbar
+            let toggleSidebarBtn: NSButton
+            if #available(macOS 11.0, *) {
+                let image = NSImage(systemSymbolName: "sidebar.left", accessibilityDescription: "Toggle Sidebar")
+                    ?? NSImage(named: NSImage.touchBarSidebarTemplateName)
+                    ?? NSImage()
+                toggleSidebarBtn = NSButton(image: image, target: self, action: #selector(toggleSidebar))
+                toggleSidebarBtn.imageScaling = .scaleProportionallyDown
+            } else {
+                toggleSidebarBtn = NSButton(title: "☰", target: self, action: #selector(toggleSidebar))
+            }
+            toggleSidebarBtn.bezelStyle = .toolbar
+            toggleSidebarBtn.toolTip = "Toggle File Tree"
 
-            let stack = NSStackView(views: [backBtn, fwdBtn])
+            let stack = NSStackView(views: [toggleSidebarBtn])
             stack.orientation = .horizontal
             stack.spacing = 4
 
             let item = NSToolbarItem(itemIdentifier: id)
             item.view = stack
-            return item
-
-        case .searchItem:
-            let field = NSSearchField(frame: NSRect(x: 0, y: 0, width: 240, height: 0))
-            let item = NSToolbarItem(itemIdentifier: id)
-            item.view = field
             return item
 
         default:
@@ -107,5 +101,4 @@ final class MainWindowController: NSWindowController, NSToolbarDelegate {
 private extension NSToolbar.Identifier { static let mainToolbar = NSToolbar.Identifier("MainToolbar") }
 private extension NSToolbarItem.Identifier {
     static let navGroup = NSToolbarItem.Identifier("NavGroup")
-    static let searchItem = NSToolbarItem.Identifier("SearchItem")
 }
