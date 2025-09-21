@@ -10,14 +10,16 @@ public final class AppViewController: NSSplitViewController {
     }
 
     private let fileTreeViewController: FileTreeViewController
-    private let columnsWrapperViewController: ColumnsWrapperViewController
+//    private let columnsWrapperViewController: MySplitViewController
+    private let scrollViewControlelr: ScrollViewController
     private var sidebarSplitViewItem: NSSplitViewItem?
     private var didSetInitialSidebarWidth = false
 
     public init(rootDirectory: RootDirectory) {
         self.rootDirectory = rootDirectory
         fileTreeViewController = FileTreeViewController(rootDirectory: rootDirectory.directory)
-        columnsWrapperViewController = ColumnsWrapperViewController()
+//        columnsWrapperViewController = MySplitViewController()
+        scrollViewControlelr = ScrollViewController()
         super.init(nibName: nil, bundle: nil)
         configureCallbacks()
     }
@@ -26,7 +28,8 @@ public final class AppViewController: NSSplitViewController {
         let defaultRootDirectory = RootDirectory.dummy
         rootDirectory = defaultRootDirectory
         fileTreeViewController = FileTreeViewController(rootDirectory: defaultRootDirectory.directory)
-        columnsWrapperViewController = ColumnsWrapperViewController()
+//        columnsWrapperViewController = MySplitViewController()
+        scrollViewControlelr = ScrollViewController()
         super.init(coder: coder)
         configureCallbacks()
     }
@@ -60,12 +63,13 @@ public final class AppViewController: NSSplitViewController {
         sidebarItem.allowsFullHeightLayout = true
         sidebarSplitViewItem = sidebarItem
 
-        let contentItem = NSSplitViewItem(viewController: columnsWrapperViewController)
+//        let contentItem = NSSplitViewItem(viewController: columnsWrapperViewController)
 
         addSplitViewItem(sidebarItem)
-        addSplitViewItem(contentItem)
+//        addSplitViewItem(contentItem)
+        addSplitViewItem(NSSplitViewItem(viewController: scrollViewControlelr))
 
-        columnsWrapperViewController.clearRootDeclarations()
+//        columnsWrapperViewController.clearRootDeclarations()
     }
 
     private func setInitialSidebarWidthIfNeeded() {
@@ -95,13 +99,11 @@ public final class AppViewController: NSSplitViewController {
         fileTreeViewController.onFileSelected = { [weak self] file in
             self?.displayDeclarations(from: file)
         }
-        fileTreeViewController.onSelectionCleared = { [weak self] in
-            self?.columnsWrapperViewController.clearRootDeclarations()
-        }
+        fileTreeViewController.onSelectionCleared = {}
     }
 
-    private func displayDeclarations(from file: File) {
-        columnsWrapperViewController.display(declarations: Array(file.abstractDeclarations))
+    private func displayDeclarations(from _: File) {
+//        columnsWrapperViewController.display(declarations: Array(file.abstractDeclarations))
     }
 }
 
