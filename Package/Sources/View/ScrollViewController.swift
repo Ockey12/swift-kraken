@@ -10,7 +10,10 @@ import AppKit
 final class ScrollViewController: NSViewController {
     private var scrollView: NSScrollView!
     private var leftWidthConstraint: NSLayoutConstraint!
+    private var rightWidthConstraint: NSLayoutConstraint!
     private var dragStartLeftWidth: CGFloat = 0
+    private var dragStartRightWidth: CGFloat = 0
+    private var dragStartedAtRightEdge = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -68,12 +71,13 @@ final class ScrollViewController: NSViewController {
         stackView.addArrangedSubview(rightView)
 
         leftWidthConstraint = leftView.widthAnchor.constraint(equalToConstant: 500)
+        rightWidthConstraint = rightView.widthAnchor.constraint(equalToConstant: 0)
 
         NSLayoutConstraint.activate([
             leftWidthConstraint,
             dividerView.widthAnchor.constraint(equalToConstant: 10),
             centerView.widthAnchor.constraint(equalToConstant: 500),
-            rightView.widthAnchor.constraint(equalToConstant: 500),
+            rightWidthConstraint,
         ])
 
         let panGesture = NSPanGestureRecognizer(target: self, action: #selector(handleDividerPan(_:)))
@@ -82,23 +86,69 @@ final class ScrollViewController: NSViewController {
 
     @objc
     private func handleDividerPan(_ gesture: NSPanGestureRecognizer) {
-        let translation = gesture.translation(in: view)
+        let translationX = gesture.translation(in: view).x
 
         switch gesture.state {
         case .began:
             dragStartLeftWidth = leftWidthConstraint.constant
+            dragStartRightWidth = rightWidthConstraint.constant
+            dragStartedAtRightEdge = isScrolledToRightEdge()
 
         case .changed:
-            let newWidth = max(0, dragStartLeftWidth + translation.x)
-            leftWidthConstraint.constant = newWidth
-            view.layoutSubtreeIfNeeded()
+            applyWidths(for: translationX, shouldLayout: true)
 
         case .ended, .cancelled:
-            let newWidth = max(0, dragStartLeftWidth + translation.x)
-            leftWidthConstraint.constant = newWidth
+            applyWidths(for: translationX, shouldLayout: true)
 
         default:
             break
         }
+    }
+
+    private func applyWidths(for translation: CGFloat, shouldLayout: Bool) {
+        let widths = calculateWidths(for: translation)
+        leftWidthConstraint.constant = widths.left
+        rightWidthConstraint.constant = widths.right
+
+        if shouldLayout {
+            view.layoutSubtreeIfNeeded()
+        }
+    }
+
+    private func calculateWidths(for translation: CGFloat) -> (left: CGFloat, right: CGFloat) {
+        var newLeftWidth = dragStartLeftWidth
+        var newRightWidth = dragStartRightWidth
+
+        if translation >= 0 {
+            let leftIncrease = translation
+            newLeftWidth += leftIncrease
+
+            if dragStartRightWidth > 0 {
+                let rightDecrease = min(leftIncrease, dragStartRightWidth)
+                newRightWidth -= rightDecrease
+            }
+        } else {
+            let targetLeftWidth = max(0, dragStartLeftWidth + translation)
+            let actualLeftDecrease = dragStartLeftWidth - targetLeftWidth
+            newLeftWidth = targetLeftWidth
+
+            if dragStartedAtRightEdge {
+                newRightWidth += actualLeftDecrease
+            }
+        }
+
+        return (max(0, newLeftWidth), max(0, newRightWidth))
+    }
+
+    private func isScrolledToRightEdge() -> Bool {
+        guard let documentView = scrollView.documentView else {
+            return false
+        }
+
+        guard documentView.visibleRect.minX != 0 else {
+            return false
+        }
+
+        return documentView.visibleRect.maxX >= documentView.bounds.maxX - 0.5
     }
 }
