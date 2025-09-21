@@ -7,6 +7,7 @@
 
 import AppKit
 
+@MainActor
 final class ScrollViewController: NSViewController {
     private var scrollView: NSScrollView!
     private var leftWidthConstraint: NSLayoutConstraint!
@@ -14,6 +15,8 @@ final class ScrollViewController: NSViewController {
     private var dragStartLeftWidth: CGFloat = 0
     private var dragStartRightWidth: CGFloat = 0
     private var dragStartedAtRightEdge = false
+    private var lastContentOffsetX: CGFloat = 0
+    private var isRubberBandingOnRightEdge = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -36,6 +39,20 @@ final class ScrollViewController: NSViewController {
         stackView.spacing = 0
         stackView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.documentView = stackView
+        scrollView.contentView.postsBoundsChangedNotifications = true
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(contentViewDidScroll(_:)),
+            name: NSView.boundsDidChangeNotification,
+            object: scrollView.contentView,
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(scrollViewDidEndLiveScroll(_:)),
+            name: NSScrollView.didEndLiveScrollNotification,
+            object: scrollView,
+        )
+        lastContentOffsetX = scrollView.contentView.bounds.origin.x
 
         let clipView = scrollView.contentView
 
@@ -84,6 +101,10 @@ final class ScrollViewController: NSViewController {
         dividerView.addGestureRecognizer(panGesture)
     }
 
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+
     @objc
     private func handleDividerPan(_ gesture: NSPanGestureRecognizer) {
         let translationX = gesture.translation(in: view).x
@@ -103,6 +124,39 @@ final class ScrollViewController: NSViewController {
         default:
             break
         }
+    }
+
+    @objc
+    private func contentViewDidScroll(_: Notification) {
+        guard scrollView != nil else {
+            return
+        }
+        let currentOffsetX = scrollView.contentView.bounds.origin.x
+        let delta = currentOffsetX - lastContentOffsetX
+        lastContentOffsetX = currentOffsetX
+
+        updateRubberBandingState()
+
+        guard delta < 0 else {
+            return
+        }
+
+        let currentRightWidth = rightWidthConstraint.constant
+        guard currentRightWidth > 0 else {
+            return
+        }
+
+        guard isRubberBandingOnRightEdge == false else {
+            return
+        }
+
+        let shrinkAmount = min(-delta, currentRightWidth)
+        guard shrinkAmount > 0 else {
+            return
+        }
+
+        rightWidthConstraint.constant = currentRightWidth - shrinkAmount
+        view.layoutSubtreeIfNeeded()
     }
 
     private func applyWidths(for translation: CGFloat, shouldLayout: Bool) {
@@ -142,13 +196,38 @@ final class ScrollViewController: NSViewController {
 
     private func isScrolledToRightEdge() -> Bool {
         guard let documentView = scrollView.documentView else {
-            return false
+            return true
         }
 
-        guard documentView.visibleRect.minX != 0 else {
-            return false
+        let visibleRect = scrollView.documentVisibleRect
+        let documentWidth = documentView.bounds.width
+        let epsilon: CGFloat = 1.0
+
+        if documentWidth <= visibleRect.width + epsilon {
+            return true
         }
 
-        return documentView.visibleRect.maxX >= documentView.bounds.maxX - 0.5
+        return visibleRect.maxX >= documentWidth - epsilon
+    }
+
+    private func updateRubberBandingState() {
+        guard let documentView = scrollView.documentView else {
+            isRubberBandingOnRightEdge = false
+            return
+        }
+
+        let visibleRect = scrollView.documentVisibleRect
+        let documentWidth = documentView.bounds.width
+
+        if visibleRect.maxX > documentWidth {
+            isRubberBandingOnRightEdge = true
+        } else if visibleRect.maxX <= documentWidth - 1 {
+            isRubberBandingOnRightEdge = false
+        }
+    }
+
+    @objc
+    private func scrollViewDidEndLiveScroll(_: Notification) {
+        updateRubberBandingState()
     }
 }
