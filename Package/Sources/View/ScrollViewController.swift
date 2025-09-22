@@ -142,58 +142,80 @@ final class ScrollViewController: NSViewController {
 
         // MARK: NSOutlineViewDelegate
 
-        func outlineView(_ outlineView: NSOutlineView, viewFor _: NSTableColumn?, item: Any) -> NSView? {
+        func outlineView(_ outlineView: NSOutlineView, viewFor tableColumn: NSTableColumn?, item: Any) -> NSView? {
             guard let node = item as? Node else {
                 return nil
             }
 
-            let identifier = NSUserInterfaceItemIdentifier("DeclarationCell")
-            let cellView: NSTableCellView
-            if let reused = outlineView.makeView(withIdentifier: identifier, owner: self) as? NSTableCellView {
-                cellView = reused
-            } else {
-                cellView = NSTableCellView()
-                cellView.identifier = identifier
-
-                let textField = NSTextField(labelWithString: "")
-                textField.translatesAutoresizingMaskIntoConstraints = false
-                cellView.addSubview(textField)
-                cellView.textField = textField
-
-                let arrowButton: NSButton
-                if let img = NSImage(systemSymbolName: "chevron.right", accessibilityDescription: "Open Dependencies") {
-                    arrowButton = NSButton(image: img, target: self, action: #selector(arrowButtonTapped(_:)))
-                    arrowButton.isBordered = false
-                } else {
-                    arrowButton = NSButton(title: "→", target: self, action: #selector(arrowButtonTapped(_:)))
-                    arrowButton.bezelStyle = .inline
-                }
-                arrowButton.translatesAutoresizingMaskIntoConstraints = false
-                arrowButton.identifier = NSUserInterfaceItemIdentifier("RightArrowButton")
-                arrowButton.setContentCompressionResistancePriority(.required, for: .horizontal)
-                arrowButton.setContentCompressionResistancePriority(.required, for: .vertical)
-                cellView.addSubview(arrowButton)
-
-                NSLayoutConstraint.activate([
-                    textField.leadingAnchor.constraint(equalTo: cellView.leadingAnchor, constant: 4),
-                    textField.trailingAnchor.constraint(equalTo: arrowButton.leadingAnchor, constant: -6),
-                    textField.centerYAnchor.constraint(equalTo: cellView.centerYAnchor),
-
-                    arrowButton.trailingAnchor.constraint(equalTo: cellView.trailingAnchor, constant: -4),
-                    arrowButton.centerYAnchor.constraint(equalTo: cellView.centerYAnchor),
-                    arrowButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 14),
-                    arrowButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 14),
-                ])
+            guard let tableColumn else {
+                return nil
             }
 
-            cellView.textField?.stringValue = node.declaration.name
+            if tableColumn.identifier.rawValue == "NameColumn" {
+                let identifier = NSUserInterfaceItemIdentifier("NameCell")
+                let cellView: NSTableCellView
+                if let reused = outlineView.makeView(withIdentifier: identifier, owner: self) as? NSTableCellView {
+                    cellView = reused
+                } else {
+                    cellView = NSTableCellView()
+                    cellView.identifier = identifier
 
-            if let arrowButton = cellView.subviews.compactMap({ $0 as? NSButton }).first(where: { $0.identifier == NSUserInterfaceItemIdentifier("RightArrowButton") }) {
+                    let textField = NSTextField(labelWithString: "")
+                    textField.translatesAutoresizingMaskIntoConstraints = false
+                    textField.lineBreakMode = .byTruncatingTail
+                    textField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+                    cellView.addSubview(textField)
+                    cellView.textField = textField
+
+                    NSLayoutConstraint.activate([
+                        textField.leadingAnchor.constraint(equalTo: cellView.leadingAnchor, constant: 4),
+                        textField.trailingAnchor.constraint(equalTo: cellView.trailingAnchor, constant: -4),
+                        textField.centerYAnchor.constraint(equalTo: cellView.centerYAnchor),
+                    ])
+                }
+
+                cellView.textField?.stringValue = node.declaration.name
+                return cellView
+            } else if tableColumn.identifier.rawValue == "ActionColumn" {
+                let identifier = NSUserInterfaceItemIdentifier("ActionCell")
+                let cellView: NSTableCellView
+                let arrowButton: NSButton
+                if let reused = outlineView.makeView(withIdentifier: identifier, owner: self) as? NSTableCellView,
+                   let reusedButton = reused.subviews.compactMap({ $0 as? NSButton }).first {
+                    cellView = reused
+                    arrowButton = reusedButton
+                } else {
+                    cellView = NSTableCellView()
+                    cellView.identifier = identifier
+
+                    if let img = NSImage(systemSymbolName: "arrow.right.circle.fill", accessibilityDescription: "Open Dependencies") {
+                        arrowButton = NSButton(image: img, target: self, action: #selector(arrowButtonTapped(_:)))
+                        arrowButton.isBordered = false
+                    } else {
+                        arrowButton = NSButton(title: "→", target: self, action: #selector(arrowButtonTapped(_:)))
+                        arrowButton.bezelStyle = .inline
+                    }
+                    arrowButton.translatesAutoresizingMaskIntoConstraints = false
+                    arrowButton.identifier = NSUserInterfaceItemIdentifier("RightArrowButton")
+                    arrowButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+                    arrowButton.setContentCompressionResistancePriority(.required, for: .vertical)
+                    cellView.addSubview(arrowButton)
+
+                    NSLayoutConstraint.activate([
+                        arrowButton.trailingAnchor.constraint(equalTo: cellView.trailingAnchor),
+                        arrowButton.centerYAnchor.constraint(equalTo: cellView.centerYAnchor),
+                        arrowButton.widthAnchor.constraint(equalToConstant: 24),
+                        arrowButton.heightAnchor.constraint(equalToConstant: 24),
+                    ])
+                }
+
                 buttonToNode[ObjectIdentifier(arrowButton)] = node
                 arrowButton.target = self
                 arrowButton.action = #selector(arrowButtonTapped(_:))
+                return cellView
             }
-            return cellView
+
+            return nil
         }
 
         @objc
@@ -453,18 +475,27 @@ final class ScrollViewController: NSViewController {
 
         let outlineView = NSOutlineView()
         outlineView.headerView = nil
+        outlineView.columnAutoresizingStyle = .firstColumnOnlyAutoresizingStyle
         outlineView.usesAlternatingRowBackgroundColors = false
         outlineView.backgroundColor = .clear
         outlineView.allowsMultipleSelection = false
         outlineView.allowsEmptySelection = true
         outlineView.rowSizeStyle = .default
 
-        let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("DeclarationColumn"))
-        column.title = "Declarations"
-        column.minWidth = 160
-        column.resizingMask = .autoresizingMask
-        outlineView.addTableColumn(column)
-        outlineView.outlineTableColumn = column
+        let nameColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("NameColumn"))
+        nameColumn.title = ""
+        nameColumn.minWidth = 160
+        nameColumn.resizingMask = .autoresizingMask
+
+        let actionColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("ActionColumn"))
+        actionColumn.title = ""
+        actionColumn.minWidth = 24
+        actionColumn.maxWidth = 24
+        actionColumn.resizingMask = []
+
+        outlineView.addTableColumn(nameColumn)
+        outlineView.addTableColumn(actionColumn)
+        outlineView.outlineTableColumn = nameColumn
 
         let ds = DeclarationOutlineDataSource()
         outlineView.dataSource = ds
