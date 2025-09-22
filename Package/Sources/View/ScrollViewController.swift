@@ -6,6 +6,8 @@
 //
 
 import AppKit
+import IdentifiedCollections
+import SwiftDeclaration
 
 private final class ColumnViewState {
     private let widthConstraint: NSLayoutConstraint
@@ -37,6 +39,8 @@ final class ScrollViewController: NSViewController {
         let boundaryView: NSView
         let panGesture: NSPanGestureRecognizer
         let addButton: NSButton
+        let outlineView: NSOutlineView
+        let outlineDataSource: DeclarationOutlineDataSource
         let state: ColumnViewState
         var lastTranslationX: CGFloat = 0
         var dragStartedAtRightEdge = false
@@ -46,13 +50,103 @@ final class ScrollViewController: NSViewController {
             boundaryView: NSView,
             panGesture: NSPanGestureRecognizer,
             addButton: NSButton,
+            outlineView: NSOutlineView,
+            outlineDataSource: DeclarationOutlineDataSource,
             state: ColumnViewState,
         ) {
             self.containerView = containerView
             self.boundaryView = boundaryView
             self.panGesture = panGesture
             self.addButton = addButton
+            self.outlineView = outlineView
+            self.outlineDataSource = outlineDataSource
             self.state = state
+        }
+    }
+
+    private final class DeclarationOutlineDataSource: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegate {
+        final class Node: NSObject {
+            let declaration: AbstractDeclaration
+            let children: [Node]
+            init(declaration: AbstractDeclaration, children: [Node]) {
+                self.declaration = declaration
+                self.children = children
+                super.init()
+            }
+        }
+
+        private(set) var rootNodes: [Node] = []
+
+        func update(with declarations: IdentifiedArrayOf<AbstractDeclaration>) {
+            rootNodes = declarations.map { decl in
+                buildNode(from: decl)
+            }
+        }
+
+        private func buildNode(from declaration: AbstractDeclaration) -> Node {
+            let childrenDecls: [AbstractDeclaration] =
+                Array(declaration.variables)
+                    + Array(declaration.functions)
+                    + Array(declaration.cases)
+                    + Array(declaration.nestingStructs)
+                    + Array(declaration.nestingClasses)
+                    + Array(declaration.nestingEnums)
+            let children = childrenDecls.map { buildNode(from: $0) }
+            return Node(declaration: declaration, children: children)
+        }
+
+        // MARK: NSOutlineViewDataSource
+
+        func outlineView(_: NSOutlineView, numberOfChildrenOfItem item: Any?) -> Int {
+            guard let node = item as? Node else {
+                return rootNodes.count
+            }
+            return node.children.count
+        }
+
+        func outlineView(_: NSOutlineView, isItemExpandable item: Any) -> Bool {
+            guard let node = item as? Node else {
+                return false
+            }
+            return node.children.isEmpty == false
+        }
+
+        func outlineView(_: NSOutlineView, child index: Int, ofItem item: Any?) -> Any {
+            guard let node = item as? Node else {
+                return rootNodes[index]
+            }
+            return node.children[index]
+        }
+
+        // MARK: NSOutlineViewDelegate
+
+        func outlineView(_ outlineView: NSOutlineView, viewFor _: NSTableColumn?, item: Any) -> NSView? {
+            guard let node = item as? Node else {
+                return nil
+            }
+
+            let identifier = NSUserInterfaceItemIdentifier("DeclarationCell")
+            let cellView: NSTableCellView
+            if let reused = outlineView.makeView(withIdentifier: identifier, owner: self) as? NSTableCellView {
+                cellView = reused
+            } else {
+                cellView = NSTableCellView()
+                cellView.identifier = identifier
+
+                let textField = NSTextField(labelWithString: "")
+                textField.translatesAutoresizingMaskIntoConstraints = false
+                cellView.addSubview(textField)
+                cellView.textField = textField
+
+                NSLayoutConstraint.activate([
+                    textField.leadingAnchor.constraint(equalTo: cellView.leadingAnchor, constant: 4),
+                    textField.trailingAnchor.constraint(equalTo: cellView.trailingAnchor, constant: -4),
+                    textField.centerYAnchor.constraint(equalTo: cellView.centerYAnchor),
+                ])
+            }
+
+            cellView.textField?.stringValue = node.declaration.name
+            return cellView
         }
     }
 
@@ -268,6 +362,34 @@ final class ScrollViewController: NSViewController {
         view.layoutSubtreeIfNeeded()
     }
 
+    func resetToSingleColumnDisplaying(
+        declarations: IdentifiedArrayOf<AbstractDeclaration>,
+        defaultWidth: CGFloat = 500,
+        color: NSColor = .systemBlue,
+    ) {
+        let targetWidth = columns.first?.state.width ?? defaultWidth
+
+        removeAllColumns()
+        setRightEdgeSpacerWidth(0)
+
+        let newColumn = createColumn(initialWidth: targetWidth, color: color)
+        newColumn.outlineDataSource.update(with: declarations)
+        newColumn.outlineView.reloadData()
+
+        registerColumn(newColumn)
+        columns = [newColumn]
+
+        if let rightEdgeSpacerIndex = stackView.arrangedSubviews.firstIndex(of: rightEdgeSpacerView) {
+            stackView.insertArrangedSubview(newColumn.containerView, at: rightEdgeSpacerIndex)
+            stackView.insertArrangedSubview(newColumn.boundaryView, at: rightEdgeSpacerIndex + 1)
+        } else {
+            stackView.addArrangedSubview(newColumn.containerView)
+            stackView.addArrangedSubview(newColumn.boundaryView)
+        }
+
+        view.layoutSubtreeIfNeeded()
+    }
+
     private func createColumn(initialWidth: CGFloat, color: NSColor) -> ColumnContext {
         let containerView = NSView()
         containerView.translatesAutoresizingMaskIntoConstraints = false
@@ -292,6 +414,43 @@ final class ScrollViewController: NSViewController {
             addButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -8),
         ])
 
+        let scrollView = NSScrollView()
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.hasVerticalScroller = true
+        scrollView.hasHorizontalScroller = false
+        scrollView.autohidesScrollers = true
+        scrollView.borderType = .noBorder
+        scrollView.drawsBackground = false
+        containerView.addSubview(scrollView)
+
+        let outlineView = NSOutlineView()
+        outlineView.headerView = nil
+        outlineView.usesAlternatingRowBackgroundColors = false
+        outlineView.backgroundColor = .clear
+        outlineView.allowsMultipleSelection = false
+        outlineView.allowsEmptySelection = true
+        outlineView.rowSizeStyle = .default
+
+        let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("DeclarationColumn"))
+        column.title = "Declarations"
+        column.minWidth = 160
+        column.resizingMask = .autoresizingMask
+        outlineView.addTableColumn(column)
+        outlineView.outlineTableColumn = column
+
+        let ds = DeclarationOutlineDataSource()
+        outlineView.dataSource = ds
+        outlineView.delegate = ds
+
+        scrollView.documentView = outlineView
+
+        NSLayoutConstraint.activate([
+            scrollView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+            scrollView.topAnchor.constraint(equalTo: containerView.topAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
+        ])
+
         let widthConstraint = containerView.widthAnchor.constraint(equalToConstant: initialWidth)
         widthConstraint.isActive = true
         let state = ColumnViewState(width: initialWidth, widthConstraint: widthConstraint)
@@ -311,6 +470,8 @@ final class ScrollViewController: NSViewController {
             boundaryView: boundaryView,
             panGesture: panGesture,
             addButton: addButton,
+            outlineView: outlineView,
+            outlineDataSource: ds,
             state: state,
         )
     }

@@ -97,14 +97,9 @@ public final class AppViewController: NSSplitViewController {
 
     private func configureCallbacks() {
         fileTreeViewController.onFileSelected = { [weak self] file in
-            self?.displayDeclarations(from: file)
-            self?.scrollViewControlelr.resetToSingleColumnKeepingFirstWidth()
+            self?.scrollViewControlelr.resetToSingleColumnDisplaying(declarations: file.abstractDeclarations)
         }
         fileTreeViewController.onSelectionCleared = {}
-    }
-
-    private func displayDeclarations(from _: File) {
-//        columnsWrapperViewController.display(declarations: Array(file.abstractDeclarations))
     }
 }
 
