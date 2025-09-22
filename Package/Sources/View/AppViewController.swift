@@ -22,6 +22,7 @@ public final class AppViewController: NSSplitViewController {
         scrollViewControlelr = ScrollViewController()
         super.init(nibName: nil, bundle: nil)
         configureCallbacks()
+        scrollViewControlelr.updateRootDirectory(rootDirectory)
     }
 
     public required init?(coder: NSCoder) {
@@ -32,6 +33,7 @@ public final class AppViewController: NSSplitViewController {
         scrollViewControlelr = ScrollViewController()
         super.init(coder: coder)
         configureCallbacks()
+        scrollViewControlelr.updateRootDirectory(defaultRootDirectory)
     }
 
     override public func viewDidLoad() {
@@ -46,6 +48,7 @@ public final class AppViewController: NSSplitViewController {
 
     public func updateRootDirectory(_ newRootDirectory: RootDirectory) {
         rootDirectory = newRootDirectory
+        scrollViewControlelr.updateRootDirectory(newRootDirectory)
     }
 
     private func setupSplitView() {

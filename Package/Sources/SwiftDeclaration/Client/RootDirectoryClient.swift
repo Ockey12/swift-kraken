@@ -31,6 +31,7 @@ extension RootDirectoryClient: DependencyKey {
         return RootDirectory(
             directory: rootDirectory,
             keyPathTable: rootDirectory.generateKeyPath(fromRootDirectory: \.self),
+            usrStore: usrStore,
         )
     }
 }

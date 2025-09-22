@@ -6,8 +6,30 @@
 //
 
 import AppKit
+import Foundation
 import IdentifiedCollections
 import SwiftDeclaration
+
+private final class VerticalOnlyScrollView: NSScrollView {
+    override func scrollWheel(with event: NSEvent) {
+        let hasHorizontal = abs(event.scrollingDeltaX) > 0.0
+        let hasVertical = abs(event.scrollingDeltaY) > 0.0
+
+        // 横スクロールのみ: 親へ伝播し、自分では処理しない
+        if hasHorizontal, !hasVertical {
+            nextResponder?.scrollWheel(with: event)
+            return
+        }
+
+        // 縦成分は通常通り処理
+        super.scrollWheel(with: event)
+
+        // 斜めスクロール（縦+横）: 親にも横成分を伝播
+        if hasHorizontal, hasVertical {
+            nextResponder?.scrollWheel(with: event)
+        }
+    }
+}
 
 private final class ColumnViewState {
     private let widthConstraint: NSLayoutConstraint
@@ -38,7 +60,6 @@ final class ScrollViewController: NSViewController {
         let containerView: NSView
         let boundaryView: NSView
         let panGesture: NSPanGestureRecognizer
-        let addButton: NSButton
         let outlineView: NSOutlineView
         let outlineDataSource: DeclarationOutlineDataSource
         let state: ColumnViewState
@@ -49,7 +70,6 @@ final class ScrollViewController: NSViewController {
             containerView: NSView,
             boundaryView: NSView,
             panGesture: NSPanGestureRecognizer,
-            addButton: NSButton,
             outlineView: NSOutlineView,
             outlineDataSource: DeclarationOutlineDataSource,
             state: ColumnViewState,
@@ -57,7 +77,6 @@ final class ScrollViewController: NSViewController {
             self.containerView = containerView
             self.boundaryView = boundaryView
             self.panGesture = panGesture
-            self.addButton = addButton
             self.outlineView = outlineView
             self.outlineDataSource = outlineDataSource
             self.state = state
@@ -76,6 +95,9 @@ final class ScrollViewController: NSViewController {
         }
 
         private(set) var rootNodes: [Node] = []
+        weak var columnContext: ColumnContext?
+        var onArrowTapped: ((AbstractDeclaration, ColumnContext) -> Void)?
+        private var buttonToNode: [ObjectIdentifier: Node] = [:]
 
         func update(with declarations: IdentifiedArrayOf<AbstractDeclaration>) {
             rootNodes = declarations.map { decl in
@@ -138,15 +160,49 @@ final class ScrollViewController: NSViewController {
                 cellView.addSubview(textField)
                 cellView.textField = textField
 
+                let arrowButton: NSButton
+                if let img = NSImage(systemSymbolName: "chevron.right", accessibilityDescription: "Open Dependencies") {
+                    arrowButton = NSButton(image: img, target: self, action: #selector(arrowButtonTapped(_:)))
+                    arrowButton.isBordered = false
+                } else {
+                    arrowButton = NSButton(title: "→", target: self, action: #selector(arrowButtonTapped(_:)))
+                    arrowButton.bezelStyle = .inline
+                }
+                arrowButton.translatesAutoresizingMaskIntoConstraints = false
+                arrowButton.identifier = NSUserInterfaceItemIdentifier("RightArrowButton")
+                arrowButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+                arrowButton.setContentCompressionResistancePriority(.required, for: .vertical)
+                cellView.addSubview(arrowButton)
+
                 NSLayoutConstraint.activate([
                     textField.leadingAnchor.constraint(equalTo: cellView.leadingAnchor, constant: 4),
-                    textField.trailingAnchor.constraint(equalTo: cellView.trailingAnchor, constant: -4),
+                    textField.trailingAnchor.constraint(equalTo: arrowButton.leadingAnchor, constant: -6),
                     textField.centerYAnchor.constraint(equalTo: cellView.centerYAnchor),
+
+                    arrowButton.trailingAnchor.constraint(equalTo: cellView.trailingAnchor, constant: -4),
+                    arrowButton.centerYAnchor.constraint(equalTo: cellView.centerYAnchor),
+                    arrowButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 14),
+                    arrowButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 14),
                 ])
             }
 
             cellView.textField?.stringValue = node.declaration.name
+
+            if let arrowButton = cellView.subviews.compactMap({ $0 as? NSButton }).first(where: { $0.identifier == NSUserInterfaceItemIdentifier("RightArrowButton") }) {
+                buttonToNode[ObjectIdentifier(arrowButton)] = node
+                arrowButton.target = self
+                arrowButton.action = #selector(arrowButtonTapped(_:))
+            }
             return cellView
+        }
+
+        @objc
+        private func arrowButtonTapped(_ sender: NSButton) {
+            guard let node = buttonToNode[ObjectIdentifier(sender)],
+                  let context = columnContext else {
+                return
+            }
+            onArrowTapped?(node.declaration, context)
         }
     }
 
@@ -160,7 +216,8 @@ final class ScrollViewController: NSViewController {
 
     private var columns: [ColumnContext] = []
     private var gestureToColumn: [ObjectIdentifier: ColumnContext] = [:]
-    private var buttonToColumn: [ObjectIdentifier: ColumnContext] = [:]
+
+    private var rootDirectory: RootDirectory?
 
     private var lastContentOffsetX: CGFloat = 0
     private var isRubberBandingOnRightEdge = false
@@ -246,23 +303,7 @@ final class ScrollViewController: NSViewController {
         }
     }
 
-    @objc
-    private func handleAddColumnButton(_ sender: NSButton) {
-        guard let column = buttonToColumn[ObjectIdentifier(sender)],
-              let index = columns.firstIndex(where: { $0 === column }) else {
-            return
-        }
-
-        removeColumns(after: index)
-        setRightEdgeSpacerWidth(0)
-
-        let referenceColor = column.containerView.layer?.backgroundColor
-            .flatMap { NSColor(cgColor: $0) } ?? .systemBlue
-        let newColumn = createColumn(initialWidth: column.state.width, color: referenceColor)
-
-        insertColumn(newColumn, after: index)
-        view.layoutSubtreeIfNeeded()
-    }
+    // no-op: add button removed
 
     @objc
     private func contentViewDidScroll(_: Notification) {
@@ -390,37 +431,24 @@ final class ScrollViewController: NSViewController {
         view.layoutSubtreeIfNeeded()
     }
 
+    func updateRootDirectory(_ newRootDirectory: RootDirectory) {
+        rootDirectory = newRootDirectory
+    }
+
     private func createColumn(initialWidth: CGFloat, color: NSColor) -> ColumnContext {
         let containerView = NSView()
         containerView.translatesAutoresizingMaskIntoConstraints = false
         containerView.wantsLayer = true
         containerView.layer?.backgroundColor = color.cgColor
 
-        let addButton: NSButton
-        if let addImage = NSImage(named: NSImage.addTemplateName) {
-            addButton = NSButton(image: addImage, target: self, action: #selector(handleAddColumnButton(_:)))
-            addButton.isBordered = false
-        } else {
-            addButton = NSButton(title: "+", target: self, action: #selector(handleAddColumnButton(_:)))
-            addButton.bezelStyle = .inline
-        }
-        addButton.translatesAutoresizingMaskIntoConstraints = false
-        addButton.imagePosition = .imageOnly
-        addButton.setContentCompressionResistancePriority(.required, for: .horizontal)
-        addButton.setContentCompressionResistancePriority(.required, for: .vertical)
-        containerView.addSubview(addButton)
-        NSLayoutConstraint.activate([
-            addButton.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 8),
-            addButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -8),
-        ])
-
-        let scrollView = NSScrollView()
+        let scrollView = VerticalOnlyScrollView()
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.hasVerticalScroller = true
         scrollView.hasHorizontalScroller = false
         scrollView.autohidesScrollers = true
         scrollView.borderType = .noBorder
         scrollView.drawsBackground = false
+        scrollView.horizontalScrollElasticity = .none
         containerView.addSubview(scrollView)
 
         let outlineView = NSOutlineView()
@@ -441,6 +469,11 @@ final class ScrollViewController: NSViewController {
         let ds = DeclarationOutlineDataSource()
         outlineView.dataSource = ds
         outlineView.delegate = ds
+
+        // Inject callback to open dependencies column when arrow tapped
+        ds.onArrowTapped = { [weak self] declaration, context in
+            self?.openDependencies(of: declaration, from: context)
+        }
 
         scrollView.documentView = outlineView
 
@@ -465,15 +498,19 @@ final class ScrollViewController: NSViewController {
         let panGesture = NSPanGestureRecognizer(target: self, action: #selector(handleBoundaryPan(_:)))
         boundaryView.addGestureRecognizer(panGesture)
 
-        return ColumnContext(
+        let context = ColumnContext(
             containerView: containerView,
             boundaryView: boundaryView,
             panGesture: panGesture,
-            addButton: addButton,
             outlineView: outlineView,
             outlineDataSource: ds,
             state: state,
         )
+
+        // Link datasource back to column context for callbacks
+        ds.columnContext = context
+
+        return context
     }
 
     private func insertColumn(_ column: ColumnContext, after index: Int) {
@@ -521,12 +558,12 @@ final class ScrollViewController: NSViewController {
 
     private func registerColumn(_ column: ColumnContext) {
         gestureToColumn[ObjectIdentifier(column.panGesture)] = column
-        buttonToColumn[ObjectIdentifier(column.addButton)] = column
+        column.outlineDataSource.columnContext = column
     }
 
     private func deregisterColumn(_ column: ColumnContext) {
         gestureToColumn.removeValue(forKey: ObjectIdentifier(column.panGesture))
-        buttonToColumn.removeValue(forKey: ObjectIdentifier(column.addButton))
+        // nothing else
     }
 
     private func isScrolledToRightEdge() -> Bool {
@@ -563,5 +600,40 @@ final class ScrollViewController: NSViewController {
     @objc
     private func scrollViewDidEndLiveScroll(_: Notification) {
         updateRubberBandingState()
+    }
+
+    private func openDependencies(of declaration: AbstractDeclaration, from column: ColumnContext) {
+        guard let rootDirectory else {
+            return
+        }
+
+        var resultsSet: Set<AbstractDeclaration> = []
+        for usr in declaration.definitionUSRs {
+            let referrers = rootDirectory.getReferrers(referencedUSR: usr)
+            let referenced = rootDirectory.getReferenced(referrerUSR: usr)
+            resultsSet.formUnion(referrers)
+            resultsSet.formUnion(referenced)
+        }
+        // 自分自身は除外
+        resultsSet.remove(declaration)
+
+        let resultsArray = Array(resultsSet)
+        let identified: IdentifiedArrayOf<AbstractDeclaration> = IdentifiedArray(uniqueElements: resultsArray)
+
+        guard let index = columns.firstIndex(where: { $0 === column }) else {
+            return
+        }
+
+        removeColumns(after: index)
+        setRightEdgeSpacerWidth(0)
+
+        let referenceColor = column.containerView.layer?.backgroundColor
+            .flatMap { NSColor(cgColor: $0) } ?? .systemBlue
+        let newColumn = createColumn(initialWidth: column.state.width, color: referenceColor)
+        newColumn.outlineDataSource.update(with: identified)
+        newColumn.outlineView.reloadData()
+
+        insertColumn(newColumn, after: index)
+        view.layoutSubtreeIfNeeded()
     }
 }
