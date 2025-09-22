@@ -31,7 +31,6 @@ private final class ColumnViewState {
     }
 }
 
-@MainActor
 final class ScrollViewController: NSViewController {
     private final class ColumnContext {
         let containerView: NSView
@@ -61,9 +60,9 @@ final class ScrollViewController: NSViewController {
 
     private var scrollView: NSScrollView!
     private var stackView: NSStackView!
-    private var rightView: NSView!
-    private var rightWidthConstraint: NSLayoutConstraint!
-    private var rightViewWidth: CGFloat = 0
+    private var rightEdgeSpacerView: NSView!
+    private var rightEdgeSpacerConstraint: NSLayoutConstraint!
+    private var rightEdgeSpacerWidth: CGFloat = 0
 
     private var columns: [ColumnContext] = []
     private var gestureToColumn: [ObjectIdentifier: ColumnContext] = [:]
@@ -161,7 +160,7 @@ final class ScrollViewController: NSViewController {
         }
 
         removeColumns(after: index)
-        setRightViewWidth(0)
+        setRightEdgeSpacerWidth(0)
 
         let referenceColor = column.containerView.layer?.backgroundColor
             .flatMap { NSColor(cgColor: $0) } ?? .systemBlue
@@ -186,8 +185,8 @@ final class ScrollViewController: NSViewController {
             return
         }
 
-        let currentRightWidth = rightViewWidth
-        guard currentRightWidth > 0 else {
+        let currentRightEdgeSpacerWidth = rightEdgeSpacerWidth
+        guard currentRightEdgeSpacerWidth > 0 else {
             return
         }
 
@@ -195,12 +194,12 @@ final class ScrollViewController: NSViewController {
             return
         }
 
-        let shrinkAmount = min(-delta, currentRightWidth)
+        let shrinkAmount = min(-delta, currentRightEdgeSpacerWidth)
         guard shrinkAmount > 0 else {
             return
         }
 
-        setRightViewWidth(currentRightWidth - shrinkAmount)
+        setRightEdgeSpacerWidth(currentRightEdgeSpacerWidth - shrinkAmount)
         view.layoutSubtreeIfNeeded()
     }
 
@@ -210,15 +209,15 @@ final class ScrollViewController: NSViewController {
             return
         }
 
-        updateRightViewWidth(using: appliedDelta, dragStartedAtRightEdge: column.dragStartedAtRightEdge)
+        updateRightEdgeSpacerWidth(using: appliedDelta, dragStartedAtRightEdge: column.dragStartedAtRightEdge)
 
         if shouldLayout {
             view.layoutSubtreeIfNeeded()
         }
     }
 
-    private func updateRightViewWidth(using delta: CGFloat, dragStartedAtRightEdge: Bool) {
-        let currentWidth = rightViewWidth
+    private func updateRightEdgeSpacerWidth(using delta: CGFloat, dragStartedAtRightEdge: Bool) {
+        let currentWidth = rightEdgeSpacerWidth
         var newWidth = currentWidth
 
         if currentWidth > 0, delta > 0 {
@@ -227,34 +226,46 @@ final class ScrollViewController: NSViewController {
             newWidth = max(0, currentWidth - delta)
         }
 
-        setRightViewWidth(newWidth)
+        setRightEdgeSpacerWidth(newWidth)
     }
 
-    private func setRightViewWidth(_ width: CGFloat) {
-        rightViewWidth = width
-        rightWidthConstraint.constant = width
+    private func setRightEdgeSpacerWidth(_ width: CGFloat) {
+        rightEdgeSpacerWidth = width
+        rightEdgeSpacerConstraint.constant = width
     }
 
     private func configureInitialColumns() {
-        let leftColumn = createColumn(initialWidth: 500, color: .systemRed)
-        let centerColumn = createColumn(initialWidth: 500, color: .systemBlue)
+        columns = []
 
-        columns = [leftColumn, centerColumn]
+        rightEdgeSpacerView = NSView()
+        rightEdgeSpacerView.translatesAutoresizingMaskIntoConstraints = false
+        rightEdgeSpacerView.wantsLayer = true
+        rightEdgeSpacerView.layer?.backgroundColor = NSColor.systemGreen.cgColor
+        stackView.addArrangedSubview(rightEdgeSpacerView)
 
-        for column in columns {
-            registerColumn(column)
-            stackView.addArrangedSubview(column.containerView)
-            stackView.addArrangedSubview(column.boundaryView)
+        rightEdgeSpacerConstraint = rightEdgeSpacerView.widthAnchor.constraint(equalToConstant: rightEdgeSpacerWidth)
+        rightEdgeSpacerConstraint.isActive = true
+    }
+
+    func resetToSingleColumnKeepingFirstWidth(defaultWidth: CGFloat = 500, color: NSColor = .systemBlue) {
+        let targetWidth = columns.first?.state.width ?? defaultWidth
+
+        removeAllColumns()
+        setRightEdgeSpacerWidth(0)
+
+        let newColumn = createColumn(initialWidth: targetWidth, color: color)
+        registerColumn(newColumn)
+        columns = [newColumn]
+
+        if let rightEdgeSpacerIndex = stackView.arrangedSubviews.firstIndex(of: rightEdgeSpacerView) {
+            stackView.insertArrangedSubview(newColumn.containerView, at: rightEdgeSpacerIndex)
+            stackView.insertArrangedSubview(newColumn.boundaryView, at: rightEdgeSpacerIndex + 1)
+        } else {
+            stackView.addArrangedSubview(newColumn.containerView)
+            stackView.addArrangedSubview(newColumn.boundaryView)
         }
 
-        rightView = NSView()
-        rightView.translatesAutoresizingMaskIntoConstraints = false
-        rightView.wantsLayer = true
-        rightView.layer?.backgroundColor = NSColor.systemGreen.cgColor
-        stackView.addArrangedSubview(rightView)
-
-        rightWidthConstraint = rightView.widthAnchor.constraint(equalToConstant: rightViewWidth)
-        rightWidthConstraint.isActive = true
+        view.layoutSubtreeIfNeeded()
     }
 
     private func createColumn(initialWidth: CGFloat, color: NSColor) -> ColumnContext {
@@ -323,6 +334,21 @@ final class ScrollViewController: NSViewController {
         }
 
         for removalIndex in stride(from: columns.count - 1, through: index + 1, by: -1) {
+            let column = columns.remove(at: removalIndex)
+            deregisterColumn(column)
+            stackView.removeArrangedSubview(column.boundaryView)
+            column.boundaryView.removeFromSuperview()
+            stackView.removeArrangedSubview(column.containerView)
+            column.containerView.removeFromSuperview()
+        }
+    }
+
+    private func removeAllColumns() {
+        guard columns.isEmpty == false else {
+            return
+        }
+
+        for removalIndex in stride(from: columns.count - 1, through: 0, by: -1) {
             let column = columns.remove(at: removalIndex)
             deregisterColumn(column)
             stackView.removeArrangedSubview(column.boundaryView)
