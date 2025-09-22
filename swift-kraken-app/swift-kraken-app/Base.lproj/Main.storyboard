@@ -2,6 +2,7 @@
 <document type="com.apple.InterfaceBuilder3.Cocoa.Storyboard.XIB" version="3.0" toolsVersion="24127" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" initialViewController="B8D-0N-5wS">
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24127"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
         <!--Application-->
@@ -692,10 +693,27 @@
                             <outlet property="delegate" destination="B8D-0N-5wS" id="98r-iN-zZc"/>
                         </connections>
                     </window>
+                    <connections>
+                        <outlet property="contentViewController" destination="Q1v-mO-uBR" id="d1N-1a-conn"/>
+                        <segue destination="Q1v-mO-uBR" kind="relationship" relationship="window.shadowedContentViewController" id="eYz-vt-RDa"/>
+                    </connections>
                 </windowController>
                 <customObject id="Oky-zY-oP4" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="75" y="250"/>
+            <point key="canvasLocation" x="74" y="264"/>
+        </scene>
+        <!--App View Controller-->
+        <scene sceneID="m3U-7k-PLh">
+            <objects>
+                <viewController id="Q1v-mO-uBR" customClass="AppViewController" customModule="View" sceneMemberID="viewController">
+                    <view key="view" wantsLayer="YES" id="g1g-5B-1Xk">
+                        <rect key="frame" x="0.0" y="0.0" width="600" height="400"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </view>
+                </viewController>
+                <customObject id="Pzo-1n-rFR" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="74" y="821"/>
         </scene>
     </scenes>
 </document>

@@ -17,9 +17,7 @@ final class MainWindowController: NSWindowController, NSToolbarDelegate {
             return
         }
 
-        if w.contentViewController == nil {
-            w.contentViewController = appViewController
-        }
+        w.contentViewController = appViewController
 
         // Merge title bar and toolbar
         w.titleVisibility = .hidden
