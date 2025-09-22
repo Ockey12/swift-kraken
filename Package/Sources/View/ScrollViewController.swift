@@ -9,14 +9,19 @@ import AppKit
 
 @MainActor
 final class ScrollViewController: NSViewController {
+    private static let minColumnWidth: CGFloat = 250
+
     private var scrollView: NSScrollView!
     private var leftWidthConstraint: NSLayoutConstraint!
     private var rightWidthConstraint: NSLayoutConstraint!
-    private var dragStartLeftWidth: CGFloat = 0
-    private var dragStartRightWidth: CGFloat = 0
+    private var leftViewWidth: CGFloat = 500
+    private var rightViewWidth: CGFloat = 0
     private var dragStartedAtRightEdge = false
+
     private var lastContentOffsetX: CGFloat = 0
     private var isRubberBandingOnRightEdge = false
+
+    private var currentTranslationX: CGFloat = 0
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -87,8 +92,8 @@ final class ScrollViewController: NSViewController {
         stackView.addArrangedSubview(centerView)
         stackView.addArrangedSubview(rightView)
 
-        leftWidthConstraint = leftView.widthAnchor.constraint(equalToConstant: 500)
-        rightWidthConstraint = rightView.widthAnchor.constraint(equalToConstant: 0)
+        leftWidthConstraint = leftView.widthAnchor.constraint(equalToConstant: leftViewWidth)
+        rightWidthConstraint = rightView.widthAnchor.constraint(equalToConstant: rightViewWidth)
 
         NSLayoutConstraint.activate([
             leftWidthConstraint,
@@ -108,22 +113,21 @@ final class ScrollViewController: NSViewController {
     @objc
     private func handleDividerPan(_ gesture: NSPanGestureRecognizer) {
         let translationX = gesture.translation(in: view).x
+        let delta = translationX - currentTranslationX
 
         switch gesture.state {
         case .began:
-            dragStartLeftWidth = leftWidthConstraint.constant
-            dragStartRightWidth = rightWidthConstraint.constant
             dragStartedAtRightEdge = isScrolledToRightEdge()
 
         case .changed:
-            applyWidths(for: translationX, shouldLayout: true)
-
-        case .ended, .cancelled:
-            applyWidths(for: translationX, shouldLayout: true)
+            dragStartedAtRightEdge = isScrolledToRightEdge()
+            applyWidths(for: delta, shouldLayout: true)
 
         default:
             break
         }
+
+        currentTranslationX = translationX
     }
 
     @objc
@@ -159,9 +163,13 @@ final class ScrollViewController: NSViewController {
         view.layoutSubtreeIfNeeded()
     }
 
-    private func applyWidths(for translation: CGFloat, shouldLayout: Bool) {
-        let widths = calculateWidths(for: translation)
+    private func applyWidths(for delta: CGFloat, shouldLayout: Bool) {
+        let widths = calculateWidths(for: delta)
+
+        leftViewWidth = widths.left
         leftWidthConstraint.constant = widths.left
+
+        rightViewWidth = widths.right
         rightWidthConstraint.constant = widths.right
 
         if shouldLayout {
@@ -169,45 +177,38 @@ final class ScrollViewController: NSViewController {
         }
     }
 
-    private func calculateWidths(for translation: CGFloat) -> (left: CGFloat, right: CGFloat) {
-        var newLeftWidth = dragStartLeftWidth
-        var newRightWidth = dragStartRightWidth
+    private func calculateWidths(for delta: CGFloat) -> (left: CGFloat, right: CGFloat) {
+        let newLeftWidth = max(Self.minColumnWidth, leftViewWidth + delta)
+        var newRightWidth = rightViewWidth
 
-        if translation >= 0 {
-            let leftIncrease = translation
-            newLeftWidth += leftIncrease
-
-            if dragStartRightWidth > 0 {
-                let rightDecrease = min(leftIncrease, dragStartRightWidth)
-                newRightWidth -= rightDecrease
-            }
-        } else {
-            let targetLeftWidth = max(0, dragStartLeftWidth + translation)
-            let actualLeftDecrease = dragStartLeftWidth - targetLeftWidth
-            newLeftWidth = targetLeftWidth
-
-            if dragStartedAtRightEdge {
-                newRightWidth += actualLeftDecrease
-            }
+        if rightViewWidth > 0,
+           delta > 0 {
+            newRightWidth = max(0, rightViewWidth - delta)
+            return (newLeftWidth, newRightWidth)
         }
 
-        return (max(0, newLeftWidth), max(0, newRightWidth))
+        if dragStartedAtRightEdge,
+           delta < 0 {
+            newRightWidth = max(0, rightViewWidth - delta)
+            return (newLeftWidth, newRightWidth)
+        }
+
+        return (newLeftWidth, rightViewWidth)
     }
 
     private func isScrolledToRightEdge() -> Bool {
         guard let documentView = scrollView.documentView else {
-            return true
+            return false
         }
 
         let visibleRect = scrollView.documentVisibleRect
         let documentWidth = documentView.bounds.width
-        let epsilon: CGFloat = 1.0
 
-        if documentWidth <= visibleRect.width + epsilon {
-            return true
+        if documentWidth <= visibleRect.width {
+            return false
         }
 
-        return visibleRect.maxX >= documentWidth - epsilon
+        return visibleRect.maxX == documentWidth
     }
 
     private func updateRubberBandingState() {
