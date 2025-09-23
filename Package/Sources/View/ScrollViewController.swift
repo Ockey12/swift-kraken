@@ -496,31 +496,10 @@ final class ScrollViewController: NSViewController {
         rightEdgeSpacerConstraint.isActive = true
     }
 
-    func resetToSingleColumnKeepingFirstWidth(defaultWidth: CGFloat = 500) {
-        let targetWidth = columns.first?.state.width ?? defaultWidth
-
-        removeAllColumns()
-        setRightEdgeSpacerWidth(0)
-
-        let newColumn = createColumn(initialWidth: targetWidth, includeFilter: false)
-        registerColumn(newColumn)
-        columns = [newColumn]
-
-        if let rightEdgeSpacerIndex = stackView.arrangedSubviews.firstIndex(of: rightEdgeSpacerView) {
-            stackView.insertArrangedSubview(newColumn.containerView, at: rightEdgeSpacerIndex)
-            stackView.insertArrangedSubview(newColumn.boundaryView, at: rightEdgeSpacerIndex + 1)
-        } else {
-            stackView.addArrangedSubview(newColumn.containerView)
-            stackView.addArrangedSubview(newColumn.boundaryView)
-        }
-
-        view.layoutSubtreeIfNeeded()
-    }
-
     func resetToSingleColumnDisplaying(
         declarations: IdentifiedArrayOf<AbstractDeclaration>,
         headerTitle: String,
-        defaultWidth: CGFloat = 500,
+        defaultWidth: CGFloat = 320,
     ) {
         let targetWidth = columns.first?.state.width ?? defaultWidth
 
