@@ -686,6 +686,9 @@ final class ScrollViewController: NSViewController {
         let columnInsertionIndex = boundaryIndex + 1
         stackView.insertArrangedSubview(column.containerView, at: columnInsertionIndex)
         stackView.insertArrangedSubview(column.boundaryView, at: columnInsertionIndex + 1)
+
+        // After adding a new column, scroll to the right edge with animation
+        scrollToRightEdge()
     }
 
     private func removeColumns(after index: Int) {
@@ -847,6 +850,38 @@ final class ScrollViewController: NSViewController {
         // Restore expansion state if exists
         if let ids = column.expandedIDsByFilter[column.currentFilter] {
             column.outlineDataSource.restoreExpandedState(ids: ids, in: column.outlineView)
+        }
+    }
+
+    // Scroll to the right edge with animation
+    private func scrollToRightEdge(animated: Bool = true, duration: TimeInterval = 0.25) {
+        guard let documentView = scrollView?.documentView else {
+            return
+        }
+
+        // Ensure layout is up to date to get the correct width
+        view.layoutSubtreeIfNeeded()
+
+        let clipView = scrollView.contentView
+        let visibleRect = scrollView.documentVisibleRect
+        let documentWidth = documentView.bounds.width
+        let currentOrigin = clipView.bounds.origin
+        let targetX = max(0, documentWidth - visibleRect.width)
+        let targetOrigin = NSPoint(x: targetX, y: currentOrigin.y)
+
+        guard abs(currentOrigin.x - targetX) > 0.5 else {
+            return
+        }
+
+        if animated {
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = duration
+                clipView.animator().setBoundsOrigin(targetOrigin)
+                scrollView.reflectScrolledClipView(clipView)
+            }
+        } else {
+            clipView.setBoundsOrigin(targetOrigin)
+            scrollView.reflectScrolledClipView(clipView)
         }
     }
 }
