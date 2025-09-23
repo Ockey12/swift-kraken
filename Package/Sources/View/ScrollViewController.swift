@@ -85,8 +85,7 @@ final class ScrollViewController: NSViewController {
         let containerView: NSView
         let headerView: NSView
         let titleLabel: NSTextField
-        let filterControl: NSSegmentedControl
-        let filterHeightConstraint: NSLayoutConstraint
+        let filterControl: NSSegmentedControl?
         let boundaryView: NSView
         let panGesture: NSPanGestureRecognizer
         let outlineView: NSOutlineView
@@ -107,8 +106,7 @@ final class ScrollViewController: NSViewController {
             containerView: NSView,
             headerView: NSView,
             titleLabel: NSTextField,
-            filterControl: NSSegmentedControl,
-            filterHeightConstraint: NSLayoutConstraint,
+            filterControl: NSSegmentedControl?,
             boundaryView: NSView,
             panGesture: NSPanGestureRecognizer,
             outlineView: NSOutlineView,
@@ -119,7 +117,6 @@ final class ScrollViewController: NSViewController {
             self.headerView = headerView
             self.titleLabel = titleLabel
             self.filterControl = filterControl
-            self.filterHeightConstraint = filterHeightConstraint
             self.boundaryView = boundaryView
             self.panGesture = panGesture
             self.outlineView = outlineView
@@ -505,7 +502,7 @@ final class ScrollViewController: NSViewController {
         removeAllColumns()
         setRightEdgeSpacerWidth(0)
 
-        let newColumn = createColumn(initialWidth: targetWidth)
+        let newColumn = createColumn(initialWidth: targetWidth, includeFilter: false)
         registerColumn(newColumn)
         columns = [newColumn]
 
@@ -530,13 +527,11 @@ final class ScrollViewController: NSViewController {
         removeAllColumns()
         setRightEdgeSpacerWidth(0)
 
-        let newColumn = createColumn(initialWidth: targetWidth)
+        let newColumn = createColumn(initialWidth: targetWidth, includeFilter: false)
         // 先頭カラムのヘッダーにファイルのフルパスを表示（先頭省略）
         newColumn.titleLabel.stringValue = headerTitle
         newColumn.titleLabel.lineBreakMode = .byTruncatingHead
-        // 先頭カラムはセグメント高さ=0（非表示）
-        newColumn.filterHeightConstraint.constant = 0
-        newColumn.filterControl.isHidden = true
+        // 先頭カラムはセグメント未追加（includeFilter: false）
         newColumn.outlineDataSource.update(with: declarations)
         newColumn.outlineView.reloadData()
 
@@ -558,7 +553,7 @@ final class ScrollViewController: NSViewController {
         rootDirectory = newRootDirectory
     }
 
-    private func createColumn(initialWidth: CGFloat) -> ColumnContext {
+    private func createColumn(initialWidth: CGFloat, includeFilter: Bool) -> ColumnContext {
         let containerView = NSView()
         containerView.translatesAutoresizingMaskIntoConstraints = false
         containerView.wantsLayer = true
@@ -576,13 +571,15 @@ final class ScrollViewController: NSViewController {
         titleLabel.alignment = .center
         headerView.addSubview(titleLabel)
 
-        // Segmented control for dependency filter (height 0 for first column; enabled for non-first columns)
-        let filterControl = NSSegmentedControl(labels: ["All", "Referrers", "Referenced"], trackingMode: .selectOne, target: self, action: #selector(filterSegmentChanged(_:)))
-        filterControl.translatesAutoresizingMaskIntoConstraints = false
-        filterControl.selectedSegment = 0
-        filterControl.isHidden = true
-        headerView.addSubview(filterControl)
-        let filterHeightConstraint = filterControl.heightAnchor.constraint(equalToConstant: 0)
+        // Segmented control for dependency filter (only when includeFilter == true)
+        var filterControl: NSSegmentedControl?
+        if includeFilter {
+            let control = NSSegmentedControl(labels: ["All", "Referrers", "Referenced"], trackingMode: .selectOne, target: self, action: #selector(filterSegmentChanged(_:)))
+            control.translatesAutoresizingMaskIntoConstraints = false
+            control.selectedSegment = 0
+            headerView.addSubview(control)
+            filterControl = control
+        }
 
         let scrollView = VerticalOnlyScrollView()
         scrollView.translatesAutoresizingMaskIntoConstraints = false
@@ -637,12 +634,7 @@ final class ScrollViewController: NSViewController {
 
             titleLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 8),
             titleLabel.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -8),
-            titleLabel.topAnchor.constraint(equalTo: headerView.topAnchor, constant: 4),
-
-            filterControl.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
-            filterControl.centerXAnchor.constraint(equalTo: headerView.centerXAnchor),
-            filterControl.bottomAnchor.constraint(equalTo: headerView.bottomAnchor, constant: -4),
-            filterHeightConstraint,
+            titleLabel.topAnchor.constraint(equalTo: headerView.topAnchor, constant: 8),
 
             // ScrollView constraints
             scrollView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
@@ -650,6 +642,18 @@ final class ScrollViewController: NSViewController {
             scrollView.topAnchor.constraint(equalTo: headerView.bottomAnchor),
             scrollView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
         ])
+
+        if filterControl == nil {
+            NSLayoutConstraint.activate([
+                titleLabel.bottomAnchor.constraint(equalTo: headerView.bottomAnchor),
+            ])
+        } else {
+            NSLayoutConstraint.activate([
+                filterControl!.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
+                filterControl!.centerXAnchor.constraint(equalTo: headerView.centerXAnchor),
+                filterControl!.bottomAnchor.constraint(equalTo: headerView.bottomAnchor, constant: -4),
+            ])
+        }
 
         let widthConstraint = containerView.widthAnchor.constraint(equalToConstant: initialWidth)
         widthConstraint.isActive = true
@@ -665,7 +669,6 @@ final class ScrollViewController: NSViewController {
             headerView: headerView,
             titleLabel: titleLabel,
             filterControl: filterControl,
-            filterHeightConstraint: filterHeightConstraint,
             boundaryView: boundaryView,
             panGesture: panGesture,
             outlineView: outlineView,
@@ -676,10 +679,12 @@ final class ScrollViewController: NSViewController {
         // Link datasource back to column context for callbacks
         ds.columnContext = context
 
-        // Wire segmented control to this column context
-        filterControl.target = self
-        filterControl.action = #selector(filterSegmentChanged(_:))
-        segmentedToColumn[ObjectIdentifier(filterControl)] = context
+        // Wire segmented control to this column context (when exists)
+        if let filterControl {
+            filterControl.target = self
+            filterControl.action = #selector(filterSegmentChanged(_:))
+            segmentedToColumn[ObjectIdentifier(filterControl)] = context
+        }
 
         return context
     }
@@ -734,7 +739,9 @@ final class ScrollViewController: NSViewController {
 
     private func deregisterColumn(_ column: ColumnContext) {
         gestureToColumn.removeValue(forKey: ObjectIdentifier(column.panGesture))
-        segmentedToColumn.removeValue(forKey: ObjectIdentifier(column.filterControl))
+        if let filterControl = column.filterControl {
+            segmentedToColumn.removeValue(forKey: ObjectIdentifier(filterControl))
+        }
     }
 
     private func isScrolledToRightEdge() -> Bool {
@@ -801,12 +808,10 @@ final class ScrollViewController: NSViewController {
         removeColumns(after: index)
         setRightEdgeSpacerWidth(0)
 
-        let newColumn = createColumn(initialWidth: column.state.width)
+        let newColumn = createColumn(initialWidth: column.state.width, includeFilter: true)
         // Show header title and enable filter
         newColumn.titleLabel.stringValue = declaration.name
-        // 依存カラムではセグメントを表示する（高さ>0に）
-        newColumn.filterHeightConstraint.constant = 28
-        newColumn.filterControl.isHidden = false
+        // 依存カラムではセグメントを追加済み（includeFilter: true）
         newColumn.titleDeclaration = declaration
 
         // Store dependency sets for filtering
@@ -814,7 +819,7 @@ final class ScrollViewController: NSViewController {
         newColumn.dependenciesReferrers = IdentifiedArray(uniqueElements: Array(setReferrers))
         newColumn.dependenciesReferenced = IdentifiedArray(uniqueElements: Array(setReferenced))
         newColumn.currentFilter = .all
-        newColumn.filterControl.selectedSegment = ColumnContext.DependencyFilter.all.rawValue
+        newColumn.filterControl?.selectedSegment = ColumnContext.DependencyFilter.all.rawValue
 
         applyFilter(for: newColumn)
 
