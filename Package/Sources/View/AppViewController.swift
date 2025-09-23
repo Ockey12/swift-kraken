@@ -100,7 +100,10 @@ public final class AppViewController: NSSplitViewController {
 
     private func configureCallbacks() {
         fileTreeViewController.onFileSelected = { [weak self] file in
-            self?.scrollViewControlelr.resetToSingleColumnDisplaying(declarations: file.abstractDeclarations)
+            self?.scrollViewControlelr.resetToSingleColumnDisplaying(
+                declarations: file.abstractDeclarations,
+                headerTitle: file.fullPath,
+            )
         }
         fileTreeViewController.onSelectionCleared = {}
     }

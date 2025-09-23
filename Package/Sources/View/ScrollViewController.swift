@@ -81,7 +81,11 @@ private final class ColumnViewState {
 
 final class ScrollViewController: NSViewController {
     private final class ColumnContext {
+        static let headerLabelHeight: CGFloat = 24
         let containerView: NSView
+        let headerView: NSView
+        let titleLabel: NSTextField
+        let headerHeightConstraint: NSLayoutConstraint
         let boundaryView: NSView
         let panGesture: NSPanGestureRecognizer
         let outlineView: NSOutlineView
@@ -92,6 +96,9 @@ final class ScrollViewController: NSViewController {
 
         init(
             containerView: NSView,
+            headerView: NSView,
+            titleLabel: NSTextField,
+            headerHeightConstraint: NSLayoutConstraint,
             boundaryView: NSView,
             panGesture: NSPanGestureRecognizer,
             outlineView: NSOutlineView,
@@ -99,6 +106,9 @@ final class ScrollViewController: NSViewController {
             state: ColumnViewState,
         ) {
             self.containerView = containerView
+            self.headerView = headerView
+            self.titleLabel = titleLabel
+            self.headerHeightConstraint = headerHeightConstraint
             self.boundaryView = boundaryView
             self.panGesture = panGesture
             self.outlineView = outlineView
@@ -451,6 +461,7 @@ final class ScrollViewController: NSViewController {
 
     func resetToSingleColumnDisplaying(
         declarations: IdentifiedArrayOf<AbstractDeclaration>,
+        headerTitle: String,
         defaultWidth: CGFloat = 500,
     ) {
         let targetWidth = columns.first?.state.width ?? defaultWidth
@@ -459,6 +470,10 @@ final class ScrollViewController: NSViewController {
         setRightEdgeSpacerWidth(0)
 
         let newColumn = createColumn(initialWidth: targetWidth)
+        // 先頭カラムのヘッダーにファイルのフルパスを表示（先頭省略）
+        newColumn.titleLabel.stringValue = headerTitle
+        newColumn.titleLabel.lineBreakMode = .byTruncatingHead
+        newColumn.headerHeightConstraint.constant = ColumnContext.headerLabelHeight
         newColumn.outlineDataSource.update(with: declarations)
         newColumn.outlineView.reloadData()
 
@@ -484,6 +499,21 @@ final class ScrollViewController: NSViewController {
         let containerView = NSView()
         containerView.translatesAutoresizingMaskIntoConstraints = false
         containerView.wantsLayer = true
+
+        // Header (title) view at top. Hidden (height 0) by default for the first column.
+        let headerView = NSView()
+        headerView.translatesAutoresizingMaskIntoConstraints = false
+        headerView.wantsLayer = false
+        containerView.addSubview(headerView)
+
+        let titleLabel = NSTextField(labelWithString: "")
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        titleLabel.lineBreakMode = .byTruncatingTail
+        titleLabel.font = .systemFont(ofSize: NSFont.systemFontSize, weight: .semibold)
+        titleLabel.alignment = .center
+        headerView.addSubview(titleLabel)
+
+        let headerHeightConstraint = headerView.heightAnchor.constraint(equalToConstant: 0)
 
         let scrollView = VerticalOnlyScrollView()
         scrollView.translatesAutoresizingMaskIntoConstraints = false
@@ -531,9 +561,20 @@ final class ScrollViewController: NSViewController {
         scrollView.documentView = outlineView
 
         NSLayoutConstraint.activate([
+            // Header constraints
+            headerView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+            headerView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+            headerView.topAnchor.constraint(equalTo: containerView.topAnchor),
+            headerHeightConstraint,
+
+            titleLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 8),
+            titleLabel.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -8),
+            titleLabel.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
+
+            // ScrollView constraints
             scrollView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
-            scrollView.topAnchor.constraint(equalTo: containerView.topAnchor),
+            scrollView.topAnchor.constraint(equalTo: headerView.bottomAnchor),
             scrollView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
         ])
 
@@ -548,6 +589,9 @@ final class ScrollViewController: NSViewController {
 
         let context = ColumnContext(
             containerView: containerView,
+            headerView: headerView,
+            titleLabel: titleLabel,
+            headerHeightConstraint: headerHeightConstraint,
             boundaryView: boundaryView,
             panGesture: panGesture,
             outlineView: outlineView,
@@ -676,6 +720,9 @@ final class ScrollViewController: NSViewController {
         setRightEdgeSpacerWidth(0)
 
         let newColumn = createColumn(initialWidth: column.state.width)
+        // Show header title as the clicked declaration's name
+        newColumn.titleLabel.stringValue = declaration.name
+        newColumn.headerHeightConstraint.constant = ColumnContext.headerLabelHeight
         newColumn.outlineDataSource.update(with: identified)
         newColumn.outlineView.reloadData()
 
