@@ -15,16 +15,16 @@ private final class VerticalOnlyScrollView: NSScrollView {
         let hasHorizontal = abs(event.scrollingDeltaX) > 0.0
         let hasVertical = abs(event.scrollingDeltaY) > 0.0
 
-        // 横スクロールのみ: 親へ伝播し、自分では処理しない
+        // Horizontal-only scroll: propagate to parent and do not handle here
         if hasHorizontal, !hasVertical {
             nextResponder?.scrollWheel(with: event)
             return
         }
 
-        // 縦成分は通常通り処理
+        // Handle vertical component normally
         super.scrollWheel(with: event)
 
-        // 斜めスクロール（縦+横）: 親にも横成分を伝播
+        // Diagonal scroll (vertical + horizontal): also propagate the horizontal component to parent
         if hasHorizontal, hasVertical {
             nextResponder?.scrollWheel(with: event)
         }
@@ -507,10 +507,10 @@ final class ScrollViewController: NSViewController {
         setRightEdgeSpacerWidth(0)
 
         let newColumn = createColumn(initialWidth: targetWidth, includeFilter: false)
-        // 先頭カラムのヘッダーにファイルのフルパスを表示（先頭省略）
+        // Show the full file path in the first column header (truncate head)
         newColumn.titleLabel.stringValue = headerTitle
         newColumn.titleLabel.lineBreakMode = .byTruncatingHead
-        // 先頭カラムはセグメント未追加（includeFilter: false）
+        // The first column does not include a segmented control (includeFilter: false)
         newColumn.outlineDataSource.update(with: declarations)
         newColumn.outlineView.reloadData()
 
@@ -785,7 +785,7 @@ final class ScrollViewController: NSViewController {
             setAll.formUnion(referrers)
             setAll.formUnion(referenced)
         }
-        // 自分自身は除外
+        // Exclude the declaration itself
         setAll.remove(declaration)
         setReferrers.remove(declaration)
         setReferenced.remove(declaration)
@@ -800,7 +800,7 @@ final class ScrollViewController: NSViewController {
         let newColumn = createColumn(initialWidth: column.state.width, includeFilter: true)
         // Show header title and enable filter
         newColumn.titleLabel.stringValue = declaration.name
-        // 依存カラムではセグメントを追加済み（includeFilter: true）
+        // Dependency columns include a segmented control (includeFilter: true)
         newColumn.titleDeclaration = declaration
 
         // Store dependency sets for filtering
@@ -847,7 +847,7 @@ final class ScrollViewController: NSViewController {
         column.outlineDataSource.update(with: declarations)
         column.outlineView.reloadData()
 
-        // Restore expansion state if exists
+        // Restore expansion state if it exists
         if let ids = column.expandedIDsByFilter[column.currentFilter] {
             column.outlineDataSource.restoreExpandedState(ids: ids, in: column.outlineView)
         }
