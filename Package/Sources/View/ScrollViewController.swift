@@ -578,6 +578,13 @@ final class ScrollViewController: NSViewController {
             control.translatesAutoresizingMaskIntoConstraints = false
             control.selectedSegment = 0
             headerView.addSubview(control)
+            // Set per-segment width to text width + 20pt padding on both sides
+            let font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
+            for i in 0 ..< control.segmentCount {
+                let title = control.label(forSegment: i) ?? ""
+                let width = (title as NSString).size(withAttributes: [.font: font]).width
+                control.setWidth(ceil(width + 32), forSegment: i)
+            }
             filterControl = control
         }
 
