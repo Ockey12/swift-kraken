@@ -81,11 +81,12 @@ private final class ColumnViewState {
 
 final class ScrollViewController: NSViewController {
     private final class ColumnContext {
-        static let headerLabelHeight: CGFloat = 24
+        enum DependencyFilter: Int, CaseIterable { case all = 0, referrers = 1, referenced = 2 }
         let containerView: NSView
         let headerView: NSView
         let titleLabel: NSTextField
-        let headerHeightConstraint: NSLayoutConstraint
+        let filterControl: NSSegmentedControl
+        let filterHeightConstraint: NSLayoutConstraint
         let boundaryView: NSView
         let panGesture: NSPanGestureRecognizer
         let outlineView: NSOutlineView
@@ -94,11 +95,20 @@ final class ScrollViewController: NSViewController {
         var lastTranslationX: CGFloat = 0
         var dragStartedAtRightEdge = false
 
+        // Context for dependency columns
+        var titleDeclaration: AbstractDeclaration?
+        var currentFilter: DependencyFilter = .all
+        var expandedIDsByFilter: [DependencyFilter: Set<UUID>] = [:]
+        var dependenciesAll: IdentifiedArrayOf<AbstractDeclaration> = []
+        var dependenciesReferrers: IdentifiedArrayOf<AbstractDeclaration> = []
+        var dependenciesReferenced: IdentifiedArrayOf<AbstractDeclaration> = []
+
         init(
             containerView: NSView,
             headerView: NSView,
             titleLabel: NSTextField,
-            headerHeightConstraint: NSLayoutConstraint,
+            filterControl: NSSegmentedControl,
+            filterHeightConstraint: NSLayoutConstraint,
             boundaryView: NSView,
             panGesture: NSPanGestureRecognizer,
             outlineView: NSOutlineView,
@@ -108,7 +118,8 @@ final class ScrollViewController: NSViewController {
             self.containerView = containerView
             self.headerView = headerView
             self.titleLabel = titleLabel
-            self.headerHeightConstraint = headerHeightConstraint
+            self.filterControl = filterControl
+            self.filterHeightConstraint = filterHeightConstraint
             self.boundaryView = boundaryView
             self.panGesture = panGesture
             self.outlineView = outlineView
@@ -117,6 +128,7 @@ final class ScrollViewController: NSViewController {
         }
     }
 
+    @MainActor
     private final class DeclarationOutlineDataSource: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegate {
         final class Node: NSObject {
             let declaration: AbstractDeclaration
@@ -132,11 +144,13 @@ final class ScrollViewController: NSViewController {
         weak var columnContext: ColumnContext?
         var onArrowTapped: ((AbstractDeclaration, ColumnContext) -> Void)?
         private var buttonToNode: [ObjectIdentifier: Node] = [:]
+        private var nodeCacheByID: [UUID: Node] = [:]
 
         func update(with declarations: IdentifiedArrayOf<AbstractDeclaration>) {
             rootNodes = declarations.map { decl in
                 buildNode(from: decl)
             }
+            rebuildNodeCache()
         }
 
         private func buildNode(from declaration: AbstractDeclaration) -> Node {
@@ -149,6 +163,15 @@ final class ScrollViewController: NSViewController {
                     + Array(declaration.nestingEnums)
             let children = childrenDecls.map { buildNode(from: $0) }
             return Node(declaration: declaration, children: children)
+        }
+
+        private func rebuildNodeCache() {
+            nodeCacheByID.removeAll(keepingCapacity: true)
+            func walk(_ node: Node) {
+                nodeCacheByID[node.declaration.id] = node
+                node.children.forEach(walk)
+            }
+            rootNodes.forEach(walk)
         }
 
         // MARK: NSOutlineViewDataSource
@@ -260,6 +283,43 @@ final class ScrollViewController: NSViewController {
             }
             onArrowTapped?(node.declaration, context)
         }
+
+        // MARK: Expansion state helpers
+
+        func collectExpandedIDs(in outlineView: NSOutlineView) -> Set<UUID> {
+            var expanded: Set<UUID> = []
+
+            func walk(_ node: Node) {
+                if outlineView.isItemExpanded(node) {
+                    expanded.insert(node.declaration.id)
+                    node.children.forEach(walk)
+                }
+            }
+
+            rootNodes.forEach(walk)
+            return expanded
+        }
+
+        func restoreExpandedState(ids: Set<UUID>, in outlineView: NSOutlineView) {
+            func shouldExpand(_ node: Node) -> Bool {
+                if ids.contains(node.declaration.id) {
+                    return true
+                }
+                for child in node.children where shouldExpand(child) {
+                    return true
+                }
+                return false
+            }
+
+            func expandRecursively(_ node: Node) {
+                if shouldExpand(node) {
+                    outlineView.expandItem(node)
+                    node.children.forEach(expandRecursively)
+                }
+            }
+
+            rootNodes.forEach(expandRecursively)
+        }
     }
 
     private static let minColumnWidth: CGFloat = 250
@@ -272,6 +332,7 @@ final class ScrollViewController: NSViewController {
 
     private var columns: [ColumnContext] = []
     private var gestureToColumn: [ObjectIdentifier: ColumnContext] = [:]
+    private var segmentedToColumn: [ObjectIdentifier: ColumnContext] = [:]
 
     private var rootDirectory: RootDirectory?
 
@@ -473,7 +534,9 @@ final class ScrollViewController: NSViewController {
         // 先頭カラムのヘッダーにファイルのフルパスを表示（先頭省略）
         newColumn.titleLabel.stringValue = headerTitle
         newColumn.titleLabel.lineBreakMode = .byTruncatingHead
-        newColumn.headerHeightConstraint.constant = ColumnContext.headerLabelHeight
+        // 先頭カラムはセグメント高さ=0（非表示）
+        newColumn.filterHeightConstraint.constant = 0
+        newColumn.filterControl.isHidden = true
         newColumn.outlineDataSource.update(with: declarations)
         newColumn.outlineView.reloadData()
 
@@ -500,7 +563,7 @@ final class ScrollViewController: NSViewController {
         containerView.translatesAutoresizingMaskIntoConstraints = false
         containerView.wantsLayer = true
 
-        // Header (title) view at top. Hidden (height 0) by default for the first column.
+        // Header (title) view at top.
         let headerView = NSView()
         headerView.translatesAutoresizingMaskIntoConstraints = false
         headerView.wantsLayer = false
@@ -513,7 +576,13 @@ final class ScrollViewController: NSViewController {
         titleLabel.alignment = .center
         headerView.addSubview(titleLabel)
 
-        let headerHeightConstraint = headerView.heightAnchor.constraint(equalToConstant: 0)
+        // Segmented control for dependency filter (height 0 for first column; enabled for non-first columns)
+        let filterControl = NSSegmentedControl(labels: ["All", "Referrers", "Referenced"], trackingMode: .selectOne, target: self, action: #selector(filterSegmentChanged(_:)))
+        filterControl.translatesAutoresizingMaskIntoConstraints = false
+        filterControl.selectedSegment = 0
+        filterControl.isHidden = true
+        headerView.addSubview(filterControl)
+        let filterHeightConstraint = filterControl.heightAnchor.constraint(equalToConstant: 0)
 
         let scrollView = VerticalOnlyScrollView()
         scrollView.translatesAutoresizingMaskIntoConstraints = false
@@ -565,11 +634,15 @@ final class ScrollViewController: NSViewController {
             headerView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
             headerView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
             headerView.topAnchor.constraint(equalTo: containerView.topAnchor),
-            headerHeightConstraint,
 
             titleLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 8),
             titleLabel.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -8),
-            titleLabel.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
+            titleLabel.topAnchor.constraint(equalTo: headerView.topAnchor, constant: 4),
+
+            filterControl.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
+            filterControl.centerXAnchor.constraint(equalTo: headerView.centerXAnchor),
+            filterControl.bottomAnchor.constraint(equalTo: headerView.bottomAnchor, constant: -4),
+            filterHeightConstraint,
 
             // ScrollView constraints
             scrollView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
@@ -591,7 +664,8 @@ final class ScrollViewController: NSViewController {
             containerView: containerView,
             headerView: headerView,
             titleLabel: titleLabel,
-            headerHeightConstraint: headerHeightConstraint,
+            filterControl: filterControl,
+            filterHeightConstraint: filterHeightConstraint,
             boundaryView: boundaryView,
             panGesture: panGesture,
             outlineView: outlineView,
@@ -601,6 +675,11 @@ final class ScrollViewController: NSViewController {
 
         // Link datasource back to column context for callbacks
         ds.columnContext = context
+
+        // Wire segmented control to this column context
+        filterControl.target = self
+        filterControl.action = #selector(filterSegmentChanged(_:))
+        segmentedToColumn[ObjectIdentifier(filterControl)] = context
 
         return context
     }
@@ -655,7 +734,7 @@ final class ScrollViewController: NSViewController {
 
     private func deregisterColumn(_ column: ColumnContext) {
         gestureToColumn.removeValue(forKey: ObjectIdentifier(column.panGesture))
-        // nothing else
+        segmentedToColumn.removeValue(forKey: ObjectIdentifier(column.filterControl))
     }
 
     private func isScrolledToRightEdge() -> Bool {
@@ -699,18 +778,21 @@ final class ScrollViewController: NSViewController {
             return
         }
 
-        var resultsSet: Set<AbstractDeclaration> = []
+        var setAll: Set<AbstractDeclaration> = []
+        var setReferrers: Set<AbstractDeclaration> = []
+        var setReferenced: Set<AbstractDeclaration> = []
         for usr in declaration.definitionUSRs {
             let referrers = rootDirectory.getReferrers(referencedUSR: usr)
             let referenced = rootDirectory.getReferenced(referrerUSR: usr)
-            resultsSet.formUnion(referrers)
-            resultsSet.formUnion(referenced)
+            setReferrers.formUnion(referrers)
+            setReferenced.formUnion(referenced)
+            setAll.formUnion(referrers)
+            setAll.formUnion(referenced)
         }
         // 自分自身は除外
-        resultsSet.remove(declaration)
-
-        let resultsArray = Array(resultsSet)
-        let identified: IdentifiedArrayOf<AbstractDeclaration> = IdentifiedArray(uniqueElements: resultsArray)
+        setAll.remove(declaration)
+        setReferrers.remove(declaration)
+        setReferenced.remove(declaration)
 
         guard let index = columns.firstIndex(where: { $0 === column }) else {
             return
@@ -720,13 +802,60 @@ final class ScrollViewController: NSViewController {
         setRightEdgeSpacerWidth(0)
 
         let newColumn = createColumn(initialWidth: column.state.width)
-        // Show header title as the clicked declaration's name
+        // Show header title and enable filter
         newColumn.titleLabel.stringValue = declaration.name
-        newColumn.headerHeightConstraint.constant = ColumnContext.headerLabelHeight
-        newColumn.outlineDataSource.update(with: identified)
-        newColumn.outlineView.reloadData()
+        // 依存カラムではセグメントを表示する（高さ>0に）
+        newColumn.filterHeightConstraint.constant = 28
+        newColumn.filterControl.isHidden = false
+        newColumn.titleDeclaration = declaration
+
+        // Store dependency sets for filtering
+        newColumn.dependenciesAll = IdentifiedArray(uniqueElements: Array(setAll))
+        newColumn.dependenciesReferrers = IdentifiedArray(uniqueElements: Array(setReferrers))
+        newColumn.dependenciesReferenced = IdentifiedArray(uniqueElements: Array(setReferenced))
+        newColumn.currentFilter = .all
+        newColumn.filterControl.selectedSegment = ColumnContext.DependencyFilter.all.rawValue
+
+        applyFilter(for: newColumn)
 
         insertColumn(newColumn, after: index)
         view.layoutSubtreeIfNeeded()
+    }
+
+    @objc
+    private func filterSegmentChanged(_ sender: NSSegmentedControl) {
+        guard let column = segmentedToColumn[ObjectIdentifier(sender)],
+              let selected = ColumnContext.DependencyFilter(rawValue: sender.selectedSegment) else {
+            return
+        }
+
+        // Save expansion state for previous filter
+        let prevFilter = column.currentFilter
+        let expanded = column.outlineDataSource.collectExpandedIDs(in: column.outlineView)
+        column.expandedIDsByFilter[prevFilter] = expanded
+
+        // Apply new filter
+        column.currentFilter = selected
+        applyFilter(for: column)
+    }
+
+    private func applyFilter(for column: ColumnContext) {
+        let declarations: IdentifiedArrayOf<AbstractDeclaration> =
+            switch column.currentFilter {
+            case .all:
+                column.dependenciesAll
+            case .referrers:
+                column.dependenciesReferrers
+            case .referenced:
+                column.dependenciesReferenced
+            }
+
+        column.outlineDataSource.update(with: declarations)
+        column.outlineView.reloadData()
+
+        // Restore expansion state if exists
+        if let ids = column.expandedIDsByFilter[column.currentFilter] {
+            column.outlineDataSource.restoreExpandedState(ids: ids, in: column.outlineView)
+        }
     }
 }
