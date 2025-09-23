@@ -17,7 +17,7 @@ public final class AppViewController: NSSplitViewController {
 
     public init(rootDirectory: RootDirectory) {
         self.rootDirectory = rootDirectory
-        fileTreeViewController = FileTreeViewController(rootDirectory: rootDirectory.directory)
+        fileTreeViewController = FileTreeViewController()
 //        columnsWrapperViewController = MySplitViewController()
         scrollViewControlelr = ScrollViewController()
         super.init(nibName: nil, bundle: nil)
@@ -28,7 +28,7 @@ public final class AppViewController: NSSplitViewController {
     public required init?(coder: NSCoder) {
         let defaultRootDirectory = RootDirectory.dummy
         rootDirectory = defaultRootDirectory
-        fileTreeViewController = FileTreeViewController(rootDirectory: defaultRootDirectory.directory)
+        fileTreeViewController = FileTreeViewController()
 //        columnsWrapperViewController = MySplitViewController()
         scrollViewControlelr = ScrollViewController()
         super.init(coder: coder)
@@ -124,8 +124,8 @@ private final class FileTreeViewController: NSViewController {
         static let cellIdentifier = NSUserInterfaceItemIdentifier("FileTreeCell")
     }
 
-    init(rootDirectory: Directory) {
-        topLevelNodes = FileTreeViewController.makeRootNodes(for: rootDirectory)
+    init() {
+        topLevelNodes = []
         super.init(nibName: nil, bundle: nil)
     }
 
