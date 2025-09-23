@@ -59,7 +59,7 @@ import Location
 
 public extension RootDirectory {
     static var dummy: Self {
-        // referrer
+        // referrer method
 
         let referrerFilePath = "rootDirectory/referrerFile.swift"
 
@@ -93,7 +93,7 @@ public extension RootDirectory {
             abstractDeclarations: [referrerStruct],
         )
 
-        // referenced
+        // referenced method
 
         let referencedFilePath = "rootDirectory/referencedFile.swift"
 
@@ -128,6 +128,40 @@ public extension RootDirectory {
             abstractDeclarations: [referencedStruct],
         )
 
+        // referenced type
+        let referencedTypeFilePath = "rootDirectory/referencedType.swift"
+
+        let referencedTypeID = UUID(uuidString: "00000000-0000-0000-0000-000000000004")!
+        let referencedTypeUSR = USR("referencedType")
+        let referencedTypeLocationRange = Location(fullPath: referencedTypeFilePath, line: 1, column: 1)
+            ... Location(fullPath: referencedTypeFilePath, line: 4, column: 1)
+        var referencedType = AbstractDeclaration(
+            id: referencedTypeID,
+            name: "referencedType",
+            kind: .struct,
+            sourceLocationRange: referencedTypeLocationRange,
+            definitionUSRs: [referencedTypeUSR],
+        )
+
+        let notUsedMethodID = UUID(uuidString: "00000000-0000-0000-0000-000000000005")!
+        let notUsedMethodUSR = USR("notUsedMethod")
+        let notUsedMethodLocationRange = Location(fullPath: referencedTypeFilePath, line: 2, column: 1)
+            ... Location(fullPath: referencedTypeFilePath, line: 3, column: 1)
+        let notUsedMethod = AbstractDeclaration(
+            id: notUsedMethodID,
+            name: "notUsedMethod",
+            kind: .function,
+            sourceLocationRange: notUsedMethodLocationRange,
+            definitionUSRs: [notUsedMethodUSR],
+        )
+        referencedType.functions.append(notUsedMethod)
+
+        let referencedTypeFile = File(
+            fullPath: referencedTypeFilePath,
+            sourceCode: "",
+            abstractDeclarations: [referencedType],
+        )
+
         // root directory
 
         let directory = Directory(
@@ -136,30 +170,40 @@ public extension RootDirectory {
             files: [
                 referrerFile,
                 referencedFile,
+                referencedTypeFile,
             ],
         )
 
         // KeyPath
 
         let rootDirectoryKeyPath: KeyPath<Directory?, Directory?> = \.?.self
+
         let referrerFileKeyPath: KeyPath<Directory?, File?> = \.?.files[id: referrerFilePath]
-        let referencedFileKeyPath: KeyPath<Directory?, File?> = \.?.files[id: referencedFilePath]
         let referrerStructKeyPath: KeyPath<Directory?, AbstractDeclaration?> = referrerFileKeyPath.appending(path: \.?.abstractDeclarations[id: referrerStructID])
         let referrerMethodKeyPath: KeyPath<Directory?, AbstractDeclaration?> = referrerStructKeyPath.appending(path: \.?.functions[id: referrerMethodID])
+
+        let referencedFileKeyPath: KeyPath<Directory?, File?> = \.?.files[id: referencedFilePath]
         let referencedStructKeyPath: KeyPath<Directory?, AbstractDeclaration?> = referencedFileKeyPath.appending(path: \.?.abstractDeclarations[id: referencedStructID])
         let referencedMethodKeyPath: KeyPath<Directory?, AbstractDeclaration?> = referencedStructKeyPath.appending(path: \.?.functions[id: referencedMethodID])
+
+        let referencedTypeFileKeyPath: KeyPath<Directory?, File?> = \.?.files[id: referencedTypeFilePath]
+        let referencedTypeKeyPath: KeyPath<Directory?, AbstractDeclaration?> = referencedTypeFileKeyPath.appending(path: \.?.abstractDeclarations[id: referencedTypeID])
+        let notUsedMethodKeyPath: KeyPath<Directory?, AbstractDeclaration?> = referencedTypeKeyPath.appending(path: \.?.functions[id: notUsedMethodID])
 
         let keyPathTable = KeyPathTable(
             directories: ["": rootDirectoryKeyPath],
             files: [
                 referrerFilePath: referrerFileKeyPath,
                 referencedFilePath: referencedFileKeyPath,
+                referencedTypeFilePath: referencedTypeFileKeyPath,
             ],
             abstractDeclarations: [
                 referrerStructUSR: referrerStructKeyPath,
                 referrerMethodUSR: referrerMethodKeyPath,
                 referencedStructUSR: referencedStructKeyPath,
                 referencedMethodUSR: referencedMethodKeyPath,
+                referencedTypeUSR: referencedTypeKeyPath,
+                notUsedMethodUSR: notUsedMethodKeyPath,
             ],
         )
 
@@ -169,9 +213,17 @@ public extension RootDirectory {
             definitionUSRs: [:],
             referrerUSRs: [
                 referencedMethodUSR: [Occurrence(usr: referrerMethodUSR, location: referrerMethodLocationRange.upperBound)],
+                referencedTypeUSR: [
+                    Occurrence(usr: referrerMethodUSR, location: referrerMethodLocationRange.upperBound),
+                    Occurrence(usr: referencedMethodUSR, location: referencedMethodLocationRange.upperBound),
+                ],
             ],
             referencedUSRs: [
-                referrerMethodUSR: [Occurrence(usr: referencedMethodUSR, location: referencedMethodLocationRange.upperBound)],
+                referrerMethodUSR: [
+                    Occurrence(usr: referencedMethodUSR, location: referencedMethodLocationRange.upperBound),
+                    Occurrence(usr: referencedTypeUSR, location: referencedTypeLocationRange.upperBound),
+                ],
+                referencedMethodUSR: [Occurrence(usr: referencedTypeUSR, location: referencedTypeLocationRange.upperBound)],
             ],
         )
 
