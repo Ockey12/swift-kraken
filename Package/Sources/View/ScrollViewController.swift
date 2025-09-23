@@ -319,7 +319,7 @@ final class ScrollViewController: NSViewController {
         }
     }
 
-    private static let minColumnWidth: CGFloat = 250
+    private static let minColumnWidth: CGFloat = 260
 
     private var scrollView: NSScrollView!
     private var stackView: NSStackView!
