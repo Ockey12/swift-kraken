@@ -31,6 +31,30 @@ private final class VerticalOnlyScrollView: NSScrollView {
     }
 }
 
+private final class VerticalDividerView: NSView {
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        translatesAutoresizingMaskIntoConstraints = false
+        widthAnchor.constraint(equalToConstant: 5).isActive = true
+        wantsLayer = true
+    }
+
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        needsDisplay = true
+    }
+
+    override func updateLayer() {
+        wantsLayer = true
+        layer?.backgroundColor = NSColor(named: "VerticalDivider", bundle: .module)?.cgColor
+    }
+}
+
 private final class ColumnViewState {
     private let widthConstraint: NSLayoutConstraint
 
@@ -404,13 +428,13 @@ final class ScrollViewController: NSViewController {
         rightEdgeSpacerConstraint.isActive = true
     }
 
-    func resetToSingleColumnKeepingFirstWidth(defaultWidth: CGFloat = 500, color: NSColor = .systemBlue) {
+    func resetToSingleColumnKeepingFirstWidth(defaultWidth: CGFloat = 500) {
         let targetWidth = columns.first?.state.width ?? defaultWidth
 
         removeAllColumns()
         setRightEdgeSpacerWidth(0)
 
-        let newColumn = createColumn(initialWidth: targetWidth, color: color)
+        let newColumn = createColumn(initialWidth: targetWidth)
         registerColumn(newColumn)
         columns = [newColumn]
 
@@ -428,14 +452,13 @@ final class ScrollViewController: NSViewController {
     func resetToSingleColumnDisplaying(
         declarations: IdentifiedArrayOf<AbstractDeclaration>,
         defaultWidth: CGFloat = 500,
-        color: NSColor = .systemBlue,
     ) {
         let targetWidth = columns.first?.state.width ?? defaultWidth
 
         removeAllColumns()
         setRightEdgeSpacerWidth(0)
 
-        let newColumn = createColumn(initialWidth: targetWidth, color: color)
+        let newColumn = createColumn(initialWidth: targetWidth)
         newColumn.outlineDataSource.update(with: declarations)
         newColumn.outlineView.reloadData()
 
@@ -457,11 +480,10 @@ final class ScrollViewController: NSViewController {
         rootDirectory = newRootDirectory
     }
 
-    private func createColumn(initialWidth: CGFloat, color: NSColor) -> ColumnContext {
+    private func createColumn(initialWidth: CGFloat) -> ColumnContext {
         let containerView = NSView()
         containerView.translatesAutoresizingMaskIntoConstraints = false
         containerView.wantsLayer = true
-        containerView.layer?.backgroundColor = color.cgColor
 
         let scrollView = VerticalOnlyScrollView()
         scrollView.translatesAutoresizingMaskIntoConstraints = false
@@ -519,12 +541,7 @@ final class ScrollViewController: NSViewController {
         widthConstraint.isActive = true
         let state = ColumnViewState(width: initialWidth, widthConstraint: widthConstraint)
 
-        let boundaryView = NSView()
-        boundaryView.translatesAutoresizingMaskIntoConstraints = false
-        boundaryView.wantsLayer = true
-        boundaryView.layer?.backgroundColor = NSColor.white.cgColor
-        let boundaryWidthConstraint = boundaryView.widthAnchor.constraint(equalToConstant: 10)
-        boundaryWidthConstraint.isActive = true
+        let boundaryView = VerticalDividerView()
 
         let panGesture = NSPanGestureRecognizer(target: self, action: #selector(handleBoundaryPan(_:)))
         boundaryView.addGestureRecognizer(panGesture)
@@ -658,9 +675,7 @@ final class ScrollViewController: NSViewController {
         removeColumns(after: index)
         setRightEdgeSpacerWidth(0)
 
-        let referenceColor = column.containerView.layer?.backgroundColor
-            .flatMap { NSColor(cgColor: $0) } ?? .systemBlue
-        let newColumn = createColumn(initialWidth: column.state.width, color: referenceColor)
+        let newColumn = createColumn(initialWidth: column.state.width)
         newColumn.outlineDataSource.update(with: identified)
         newColumn.outlineView.reloadData()
 

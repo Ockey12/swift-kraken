@@ -81,6 +81,9 @@ let package = Package(
                 "SwiftDeclaration",
                 .product(name: "IdentifiedCollections", package: "swift-identified-collections"),
             ],
+            resources: [
+                .process("Resources/Colors.xcassets"),
+            ],
         ),
         .testTarget(
             name: "IndexStoreTest",
