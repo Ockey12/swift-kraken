@@ -134,14 +134,6 @@ private final class FileTreeViewController: NSViewController {
         fatalError("init(coder:) has not been implemented")
     }
 
-    override func loadView() {
-        let effectView = NSVisualEffectView()
-        effectView.material = .sidebar
-        effectView.state = .active
-        effectView.blendingMode = .behindWindow
-        view = effectView
-    }
-
     override func viewDidLoad() {
         super.viewDidLoad()
         setupOutlineView()
