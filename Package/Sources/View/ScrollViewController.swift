@@ -478,8 +478,6 @@ final class ScrollViewController: NSViewController {
 
         rightEdgeSpacerView = NSView()
         rightEdgeSpacerView.translatesAutoresizingMaskIntoConstraints = false
-        rightEdgeSpacerView.wantsLayer = true
-        rightEdgeSpacerView.layer?.backgroundColor = NSColor.systemGreen.cgColor
         stackView.addArrangedSubview(rightEdgeSpacerView)
 
         rightEdgeSpacerConstraint = rightEdgeSpacerView.widthAnchor.constraint(equalToConstant: rightEdgeSpacerWidth)
