@@ -17,8 +17,8 @@ final class MainWindowController: NSWindowController, NSToolbarDelegate {
     private var swiftDirectoryURL: URL?
     private var indexStoreDirectoryURL: URL?
 
-    private weak var swiftPathLabel: NSTextField?
-    private weak var indexStorePathLabel: NSTextField?
+    private weak var swiftDirectoryButton: DirectorySelectionButton?
+    private weak var indexStoreDirectoryButton: DirectorySelectionButton?
     private weak var runButton: NSButton?
 
     @Dependency(\.rootDirectoryClient) private var rootDirectoryClient
@@ -63,11 +63,9 @@ final class MainWindowController: NSWindowController, NSToolbarDelegate {
             .flexibleSpace,
             .runAnalysis,
             .sidebarTrackingSeparator,
-            .swiftDirectoryButton,
-            .swiftDirectoryPath,
+            .swiftDirectorySelection,
             .space,
-            .indexStoreDirectoryButton,
-            .indexStoreDirectoryPath,
+            .indexStoreDirectorySelection,
             .flexibleSpace,
         ]
     }
@@ -86,76 +84,38 @@ final class MainWindowController: NSWindowController, NSToolbarDelegate {
             )
 
         case .runAnalysis:
-            let button = NSButton(title: "", target: self, action: #selector(runAnalysis))
-            button.image = NSImage(systemSymbolName: "play.fill", accessibilityDescription: "Run Analysis")
-            button.imagePosition = .imageOnly
-            button.bezelStyle = .texturedRounded
-            button.toolTip = "Run analysis."
+            let item = NSToolbarItem(itemIdentifier: id)
+            item.image = NSImage(systemSymbolName: "play.fill", accessibilityDescription: "Run Analysis")
+            item.toolTip = "Run analysis."
+            item.action = #selector(runAnalysis)
+            return item
+
+        case .swiftDirectorySelection:
+            let button = DirectorySelectionButton(
+                defaultToolTip: "Choose the Swift project or package directory.",
+                target: self,
+                action: #selector(chooseSwiftDirectory),
+            )
+            button.image = NSImage(systemSymbolName: "swift", accessibilityDescription: "Swift Directory")
+            button.update(path: swiftDirectoryURL?.path())
+            swiftDirectoryButton = button
             let item = NSToolbarItem(itemIdentifier: id)
             item.view = button
-            runButton = button
+            item.image = NSImage(systemSymbolName: "swift", accessibilityDescription: "Swift Directory")
+
             return item
 
-        case .swiftDirectoryButton:
-            let button = NSButton(title: "Swift", target: self, action: #selector(chooseSwiftDirectory))
-            button.image = NSImage(systemSymbolName: "folder", accessibilityDescription: "Swift Directory")
-            button.imagePosition = .imageLeading
-            button.bezelStyle = .texturedRounded
+        case .indexStoreDirectorySelection:
+            let button = DirectorySelectionButton(
+                defaultToolTip: "Choose the Swift project or package directory.",
+                target: self,
+                action: #selector(chooseIndexStoreDirectory),
+            )
+            button.image = NSImage(systemSymbolName: "folder.fill.badge.gearshape", accessibilityDescription: "IndexStore Directory")
+            button.update(path: indexStoreDirectoryURL?.path())
+            indexStoreDirectoryButton = button
             let item = NSToolbarItem(itemIdentifier: id)
-            item.toolTip = "Choose the Swift project or package directory."
             item.view = button
-            return item
-
-        case .swiftDirectoryPath:
-            let label = NSTextField(labelWithString: "")
-            label.lineBreakMode = .byTruncatingMiddle
-            label.translatesAutoresizingMaskIntoConstraints = false
-            label.setContentHuggingPriority(.defaultLow, for: .horizontal)
-            label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-            let container = NSView()
-            container.translatesAutoresizingMaskIntoConstraints = false
-            container.addSubview(label)
-            NSLayoutConstraint.activate([
-                label.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-                label.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-                label.centerYAnchor.constraint(equalTo: container.centerYAnchor),
-                container.heightAnchor.constraint(equalToConstant: 32),
-                container.widthAnchor.constraint(greaterThanOrEqualToConstant: 180),
-            ])
-            swiftPathLabel = label
-            let item = NSToolbarItem(itemIdentifier: id)
-            item.view = container
-            return item
-
-        case .indexStoreDirectoryButton:
-            let button = NSButton(title: "DataStore", target: self, action: #selector(chooseIndexStoreDirectory))
-            button.image = NSImage(systemSymbolName: "folder", accessibilityDescription: "IndexStore Directory")
-            button.imagePosition = .imageLeading
-            button.bezelStyle = .texturedRounded
-            let item = NSToolbarItem(itemIdentifier: id)
-            item.toolTip = "Choose the IndexStore DataStore directory."
-            item.view = button
-            return item
-
-        case .indexStoreDirectoryPath:
-            let label = NSTextField(labelWithString: "")
-            label.lineBreakMode = .byTruncatingMiddle
-            label.translatesAutoresizingMaskIntoConstraints = false
-            label.setContentHuggingPriority(.defaultLow, for: .horizontal)
-            label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-            let container = NSView()
-            container.translatesAutoresizingMaskIntoConstraints = false
-            container.addSubview(label)
-            NSLayoutConstraint.activate([
-                label.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-                label.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-                label.centerYAnchor.constraint(equalTo: container.centerYAnchor),
-                container.heightAnchor.constraint(equalToConstant: 32),
-                container.widthAnchor.constraint(greaterThanOrEqualToConstant: 180),
-            ])
-            indexStorePathLabel = label
-            let item = NSToolbarItem(itemIdentifier: id)
-            item.view = container
             return item
 
         default:
@@ -185,7 +145,7 @@ final class MainWindowController: NSWindowController, NSToolbarDelegate {
             }
             if response == .OK, let url = panel.url {
                 swiftDirectoryURL = url
-                swiftPathLabel?.stringValue = url.path()
+                swiftDirectoryButton?.update(path: url.path())
             }
         }
     }
@@ -210,7 +170,7 @@ final class MainWindowController: NSWindowController, NSToolbarDelegate {
             }
             if response == .OK, let url = panel.url {
                 indexStoreDirectoryURL = url
-                indexStorePathLabel?.stringValue = url.path()
+                indexStoreDirectoryButton?.update(path: url.path())
             }
         }
     }
@@ -248,8 +208,38 @@ private extension NSToolbar.Identifier {
 
 private extension NSToolbarItem.Identifier {
     static let runAnalysis = NSToolbarItem.Identifier("RunAnalysis")
-    static let swiftDirectoryButton = NSToolbarItem.Identifier("SwiftDirectoryButton")
-    static let swiftDirectoryPath = NSToolbarItem.Identifier("SwiftDirectoryPath")
-    static let indexStoreDirectoryButton = NSToolbarItem.Identifier("IndexStoreDirectoryButton")
-    static let indexStoreDirectoryPath = NSToolbarItem.Identifier("IndexStoreDirectoryPath")
+    static let swiftDirectorySelection = NSToolbarItem.Identifier("SwiftDirectorySelection")
+    static let indexStoreDirectorySelection = NSToolbarItem.Identifier("IndexStoreDirectorySelection")
+}
+
+private final class DirectorySelectionButton: NSButton {
+    private static let placeholder = "Choose directory"
+    private var defaultToolTip: String
+
+    init(defaultToolTip: String, target: AnyObject?, action: Selector) {
+        self.defaultToolTip = defaultToolTip
+        super.init(frame: .zero)
+
+        imagePosition = .imageLeading
+        self.target = target
+        self.action = action
+        update(path: nil)
+    }
+
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    func update(path: String?) {
+        if let path {
+            title = URL(fileURLWithPath: path).lastPathComponent
+            toolTip = path
+        } else {
+            title = Self.placeholder
+            toolTip = defaultToolTip
+        }
+
+        needsLayout = true
+    }
 }
