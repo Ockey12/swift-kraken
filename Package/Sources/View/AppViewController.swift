@@ -173,6 +173,7 @@ private final class FileTreeViewController: NSViewController {
         outlineView.allowsMultipleSelection = false
         outlineView.allowsEmptySelection = true
         outlineView.rowSizeStyle = .default
+        outlineView.style = .inset
 
         let column = NSTableColumn(identifier: Constants.columnIdentifier)
         column.title = "Files"
