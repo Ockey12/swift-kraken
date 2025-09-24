@@ -86,13 +86,13 @@ final class MainWindowController: NSWindowController, NSToolbarDelegate {
         case .runAnalysis:
             let item = NSToolbarItem(itemIdentifier: id)
             item.image = NSImage(systemSymbolName: "play.fill", accessibilityDescription: "Run Analysis")
-            item.toolTip = "Run analysis."
+            item.toolTip = "Run analysis"
             item.action = #selector(runAnalysis)
             return item
 
         case .swiftDirectorySelection:
             let button = DirectorySelectionButton(
-                defaultToolTip: "Choose the Swift project or package directory.",
+                defaultToolTip: "Choose the Swift project or package directory",
                 target: self,
                 action: #selector(chooseSwiftDirectory),
             )
@@ -107,7 +107,7 @@ final class MainWindowController: NSWindowController, NSToolbarDelegate {
 
         case .indexStoreDirectorySelection:
             let button = DirectorySelectionButton(
-                defaultToolTip: "Choose the Swift project or package directory.",
+                defaultToolTip: "Choose the Swift project or package directory",
                 target: self,
                 action: #selector(chooseIndexStoreDirectory),
             )
