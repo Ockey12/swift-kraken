@@ -23,11 +23,6 @@ private final class VerticalOnlyScrollView: NSScrollView {
 
         // Handle vertical component normally
         super.scrollWheel(with: event)
-
-        // Diagonal scroll (vertical + horizontal): also propagate the horizontal component to parent
-        if hasHorizontal, hasVertical {
-            nextResponder?.scrollWheel(with: event)
-        }
     }
 }
 
