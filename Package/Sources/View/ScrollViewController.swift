@@ -27,6 +27,10 @@ private final class VerticalOnlyScrollView: NSScrollView {
 }
 
 private final class VerticalDividerView: NSView {
+    var onMouseDown: ((CGFloat) -> Void)?
+    var onDragged: ((CGFloat) -> Void)?
+    var onMouseUp: (() -> Void)?
+
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
         translatesAutoresizingMaskIntoConstraints = false
@@ -37,6 +41,27 @@ private final class VerticalDividerView: NSView {
     @available(*, unavailable)
     required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    override func resetCursorRects() {
+        addCursorRect(bounds, cursor: .resizeLeftRight)
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        onMouseDown?(event.locationInWindow.x)
+        NSCursor.resizeLeftRight.push()
+        window?.disableCursorRects()
+    }
+
+    override func mouseUp(with _: NSEvent) {
+        onMouseUp?()
+        window?.enableCursorRects()
+        NSCursor.pop()
+        window?.invalidateCursorRects(for: self)
+    }
+
+    override func mouseDragged(with event: NSEvent) {
+        onDragged?(event.locationInWindow.x)
     }
 
     override func viewDidChangeEffectiveAppearance() {
@@ -82,12 +107,12 @@ final class ScrollViewController: NSViewController {
         let titleLabel: NSTextField
         let filterControl: NSSegmentedControl?
         let boundaryView: NSView
-        let panGesture: NSPanGestureRecognizer
         let outlineView: NSOutlineView
         let outlineDataSource: DeclarationOutlineDataSource
         let state: ColumnViewState
-        var lastTranslationX: CGFloat = 0
         var dragStartedAtRightEdge = false
+        var dragStartLocationX: CGFloat?
+        var dragInitialWidth: CGFloat = 0
 
         // Context for dependency columns
         var titleDeclaration: AbstractDeclaration?
@@ -103,7 +128,6 @@ final class ScrollViewController: NSViewController {
             titleLabel: NSTextField,
             filterControl: NSSegmentedControl?,
             boundaryView: NSView,
-            panGesture: NSPanGestureRecognizer,
             outlineView: NSOutlineView,
             outlineDataSource: DeclarationOutlineDataSource,
             state: ColumnViewState,
@@ -113,7 +137,6 @@ final class ScrollViewController: NSViewController {
             self.titleLabel = titleLabel
             self.filterControl = filterControl
             self.boundaryView = boundaryView
-            self.panGesture = panGesture
             self.outlineView = outlineView
             self.outlineDataSource = outlineDataSource
             self.state = state
@@ -323,8 +346,8 @@ final class ScrollViewController: NSViewController {
     private var rightEdgeSpacerWidth: CGFloat = 0
 
     private var columns: [ColumnContext] = []
-    private var gestureToColumn: [ObjectIdentifier: ColumnContext] = [:]
     private var segmentedToColumn: [ObjectIdentifier: ColumnContext] = [:]
+    private var columnByBoundaryID: [ObjectIdentifier: ColumnContext] = [:]
 
     private var rootDirectory: RootDirectory?
 
@@ -382,34 +405,6 @@ final class ScrollViewController: NSViewController {
 
     deinit {
         NotificationCenter.default.removeObserver(self)
-    }
-
-    @objc
-    private func handleBoundaryPan(_ gesture: NSPanGestureRecognizer) {
-        guard let column = gestureToColumn[ObjectIdentifier(gesture)] else {
-            return
-        }
-
-        let translationX = gesture.translation(in: view).x
-
-        switch gesture.state {
-        case .began:
-            column.lastTranslationX = translationX
-            column.dragStartedAtRightEdge = isScrolledToRightEdge()
-
-        case .changed:
-            let delta = translationX - column.lastTranslationX
-            column.lastTranslationX = translationX
-            guard delta != 0 else {
-                return
-            }
-            column.dragStartedAtRightEdge = isScrolledToRightEdge()
-            applyWidths(for: column, delta: delta, shouldLayout: true)
-
-        default:
-            column.lastTranslationX = 0
-            column.dragStartedAtRightEdge = false
-        }
     }
 
     // no-op: add button removed
@@ -642,8 +637,51 @@ final class ScrollViewController: NSViewController {
 
         let boundaryView = VerticalDividerView()
 
-        let panGesture = NSPanGestureRecognizer(target: self, action: #selector(handleBoundaryPan(_:)))
-        boundaryView.addGestureRecognizer(panGesture)
+        boundaryView.onMouseDown = { [weak self] startLocationX in
+            guard let self else {
+                return
+            }
+            guard let column = columnContext(for: boundaryView) else {
+                return
+            }
+            column.dragStartLocationX = startLocationX
+            column.dragInitialWidth = column.state.width
+            column.dragStartedAtRightEdge = isScrolledToRightEdge()
+        }
+
+        boundaryView.onDragged = { [weak self] currentLocationX in
+            guard let self else {
+                return
+            }
+            guard let column = columnContext(for: boundaryView) else {
+                return
+            }
+            guard let startX = column.dragStartLocationX else {
+                return
+            }
+
+            let delta = currentLocationX - startX
+            let desiredWidth = column.dragInitialWidth + delta
+            let widthDelta = desiredWidth - column.state.width
+            guard widthDelta != 0 else {
+                return
+            }
+
+            column.dragStartedAtRightEdge = isScrolledToRightEdge()
+            applyWidths(for: column, delta: widthDelta, shouldLayout: true)
+        }
+
+        boundaryView.onMouseUp = { [weak self] in
+            guard let self else {
+                return
+            }
+            guard let column = columnContext(for: boundaryView) else {
+                return
+            }
+            column.dragStartLocationX = nil
+            column.dragInitialWidth = 0
+            column.dragStartedAtRightEdge = false
+        }
 
         let context = ColumnContext(
             containerView: containerView,
@@ -651,7 +689,6 @@ final class ScrollViewController: NSViewController {
             titleLabel: titleLabel,
             filterControl: filterControl,
             boundaryView: boundaryView,
-            panGesture: panGesture,
             outlineView: outlineView,
             outlineDataSource: ds,
             state: state,
@@ -714,18 +751,24 @@ final class ScrollViewController: NSViewController {
             stackView.removeArrangedSubview(column.containerView)
             column.containerView.removeFromSuperview()
         }
+
+        columnByBoundaryID.removeAll(keepingCapacity: true)
     }
 
     private func registerColumn(_ column: ColumnContext) {
-        gestureToColumn[ObjectIdentifier(column.panGesture)] = column
         column.outlineDataSource.columnContext = column
+        columnByBoundaryID[ObjectIdentifier(column.boundaryView)] = column
     }
 
     private func deregisterColumn(_ column: ColumnContext) {
-        gestureToColumn.removeValue(forKey: ObjectIdentifier(column.panGesture))
+        columnByBoundaryID.removeValue(forKey: ObjectIdentifier(column.boundaryView))
         if let filterControl = column.filterControl {
             segmentedToColumn.removeValue(forKey: ObjectIdentifier(filterControl))
         }
+    }
+
+    private func columnContext(for boundaryView: NSView) -> ColumnContext? {
+        columnByBoundaryID[ObjectIdentifier(boundaryView)]
     }
 
     private func isScrolledToRightEdge() -> Bool {
