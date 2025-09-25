@@ -246,7 +246,7 @@ final class ScrollViewController: NSViewController {
                     ])
                 }
 
-                cellView.textField?.stringValue = node.declaration.name
+                cellView.textField?.stringValue = node.declaration.joinedHierarchicalName
                 return cellView
             } else if tableColumn.identifier.rawValue == "ActionColumn" {
                 let identifier = NSUserInterfaceItemIdentifier("ActionCell")
@@ -835,7 +835,7 @@ final class ScrollViewController: NSViewController {
 
         let newColumn = createColumn(initialWidth: column.state.width, includeFilter: true)
         // Show header title and enable filter
-        newColumn.titleLabel.stringValue = declaration.name
+        newColumn.titleLabel.stringValue = declaration.joinedHierarchicalName
         // Dependency columns include a segmented control (includeFilter: true)
         newColumn.titleDeclaration = declaration
 
