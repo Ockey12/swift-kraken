@@ -504,7 +504,7 @@ final class ScrollViewController: NSViewController {
         newColumn.titleLabel.stringValue = headerTitle
         newColumn.titleLabel.lineBreakMode = .byTruncatingHead
         // The first column does not include a segmented control (includeFilter: false)
-        newColumn.outlineDataSource.update(with: declarations)
+        newColumn.outlineDataSource.update(with: .init(uniqueElements: declarations.sorted(by: { $0.sourceLocationRange.upperBound < $1.sourceLocationRange.upperBound })))
         newColumn.outlineView.reloadData()
 
         registerColumn(newColumn)
@@ -845,9 +845,9 @@ final class ScrollViewController: NSViewController {
         newColumn.titleDeclaration = declaration
 
         // Store dependency sets for filtering
-        newColumn.dependenciesAll = IdentifiedArray(uniqueElements: Array(setAll))
-        newColumn.dependenciesReferrers = IdentifiedArray(uniqueElements: Array(setReferrers))
-        newColumn.dependenciesReferenced = IdentifiedArray(uniqueElements: Array(setReferenced))
+        newColumn.dependenciesAll = IdentifiedArray(uniqueElements: Array(setAll).sorted(by: { $0.sourceLocationRange.upperBound < $1.sourceLocationRange.upperBound }))
+        newColumn.dependenciesReferrers = IdentifiedArray(uniqueElements: Array(setReferrers).sorted(by: { $0.sourceLocationRange.upperBound < $1.sourceLocationRange.upperBound }))
+        newColumn.dependenciesReferenced = IdentifiedArray(uniqueElements: Array(setReferenced).sorted(by: { $0.sourceLocationRange.upperBound < $1.sourceLocationRange.upperBound }))
         newColumn.currentFilter = .all
         newColumn.filterControl?.selectedSegment = ColumnContext.DependencyFilter.all.rawValue
 
