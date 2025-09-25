@@ -12,7 +12,15 @@ import Location
 
 public struct AbstractDeclaration: Identifiable, Equatable, Hashable {
     public let id: UUID
-    public let name: String
+    public var hierarchicalNames: [String]
+    public var name: String? {
+        hierarchicalNames.last
+    }
+
+    public var joinedHierarchicalName: String {
+        hierarchicalNames.joined(separator: ".")
+    }
+
     public let sourceLocationRange: ClosedRange<Location>
     public var definitionUSRs: Set<USR>
     public var callersUSRs: Set<USR>
@@ -47,7 +55,7 @@ public struct AbstractDeclaration: Identifiable, Equatable, Hashable {
 
     public init(
         id: UUID,
-        name: String,
+        hierarchicalNames: [String],
         kind: Kind,
         sourceLocationRange: ClosedRange<Location>,
         definitionUSRs: Set<USR> = [],
@@ -61,7 +69,7 @@ public struct AbstractDeclaration: Identifiable, Equatable, Hashable {
         nestingEnums: IdentifiedArrayOf<AbstractDeclaration> = [],
     ) {
         self.id = id
-        self.name = name
+        self.hierarchicalNames = hierarchicalNames
         self.sourceLocationRange = sourceLocationRange
         self.definitionUSRs = definitionUSRs
         self.callersUSRs = callersUSRs

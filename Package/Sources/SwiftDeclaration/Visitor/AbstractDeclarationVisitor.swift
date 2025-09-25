@@ -17,6 +17,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
     private let usrStore: USRStore
     private let sourceLocationConverter: SourceLocationConverter
     private var abstractDeclarationsBuffer: [AbstractDeclaration] = []
+    private var hierarchicalNames: [String] = []
 
     var result: IdentifiedArrayOf<AbstractDeclaration> = []
 
@@ -37,6 +38,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
     // MARK: struct
 
     override func visit(_ node: StructDeclSyntax) -> SyntaxVisitorContinueKind {
+        hierarchicalNames.append(node.name.text)
         let nodeRange = node.sourceRange(converter: sourceLocationConverter)
         let sourceLocationRange = Location(
             fullPath: fullPath,
@@ -50,7 +52,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
             )
         var abstractDeclaration = AbstractDeclaration(
             id: uuid(),
-            name: node.name.text,
+            hierarchicalNames: hierarchicalNames,
             kind: .struct,
             sourceLocationRange: sourceLocationRange,
         )
@@ -86,6 +88,8 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
             return
         }
 
+        hierarchicalNames.removeLast()
+
         if abstractDeclarationsBuffer.isEmpty {
             result.append(structDeclaration)
         } else {
@@ -97,6 +101,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
     // MARK: class
 
     override func visit(_ node: ClassDeclSyntax) -> SyntaxVisitorContinueKind {
+        hierarchicalNames.append(node.name.text)
         let nodeRange = node.sourceRange(converter: sourceLocationConverter)
         let sourceLocationRange = Location(
             fullPath: fullPath,
@@ -110,7 +115,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
             )
         var abstractDeclaration = AbstractDeclaration(
             id: uuid(),
-            name: node.name.text,
+            hierarchicalNames: hierarchicalNames,
             kind: .class,
             sourceLocationRange: sourceLocationRange,
         )
@@ -145,6 +150,8 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
             return
         }
 
+        hierarchicalNames.removeLast()
+
         if abstractDeclarationsBuffer.isEmpty {
             result.append(classDeclaration)
         } else {
@@ -156,6 +163,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
     // MARK: enum
 
     override func visit(_ node: EnumDeclSyntax) -> SyntaxVisitorContinueKind {
+        hierarchicalNames.append(node.name.text)
         let nodeRange = node.sourceRange(converter: sourceLocationConverter)
         let sourceLocationRange = Location(
             fullPath: fullPath,
@@ -169,7 +177,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
             )
         var abstractDeclaration = AbstractDeclaration(
             id: uuid(),
-            name: node.name.text,
+            hierarchicalNames: hierarchicalNames,
             kind: .enum,
             sourceLocationRange: sourceLocationRange,
         )
@@ -204,6 +212,8 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
             return
         }
 
+        hierarchicalNames.removeLast()
+
         if abstractDeclarationsBuffer.isEmpty {
             result.append(enumDeclaration)
         } else {
@@ -233,7 +243,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
             for identifier in identifiers {
                 var abstractDeclaration = AbstractDeclaration(
                     id: uuid(),
-                    name: identifier.identifier.text,
+                    hierarchicalNames: hierarchicalNames + [identifier.identifier.text],
                     kind: .variable,
                     sourceLocationRange: sourceLocationRange,
                 )
@@ -328,6 +338,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
     // MARK: function
 
     override func visit(_ node: FunctionDeclSyntax) -> SyntaxVisitorContinueKind {
+        hierarchicalNames.append(node.name.text + "()")
         let nodeRange = node.sourceRange(converter: sourceLocationConverter)
         let sourceLocationRange = Location(
             fullPath: fullPath,
@@ -341,7 +352,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
             )
         var abstractDeclaration = AbstractDeclaration(
             id: uuid(),
-            name: node.name.text,
+            hierarchicalNames: hierarchicalNames,
             kind: .function,
             sourceLocationRange: sourceLocationRange,
         )
@@ -375,6 +386,8 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
               case .function = functionDeclaration.kind else {
             return
         }
+
+        hierarchicalNames.removeLast()
 
         if abstractDeclarationsBuffer.isEmpty {
             result.append(functionDeclaration)

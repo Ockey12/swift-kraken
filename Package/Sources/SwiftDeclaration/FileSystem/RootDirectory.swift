@@ -69,7 +69,7 @@ public extension RootDirectory {
             ... Location(fullPath: referrerFilePath, line: 4, column: 1)
         var referrerStruct = AbstractDeclaration(
             id: referrerStructID,
-            name: "referrerDeclaration",
+            hierarchicalNames: ["referrerDeclaration"],
             kind: .struct,
             sourceLocationRange: referrerStructLocationRange,
             definitionUSRs: [referrerStructUSR],
@@ -81,7 +81,7 @@ public extension RootDirectory {
             ... Location(fullPath: referrerFilePath, line: 3, column: 1)
         let referrerMethod = AbstractDeclaration(
             id: referrerMethodID,
-            name: "referrerMethod",
+            hierarchicalNames: ["referrerDeclaration", "referrerMethod"],
             kind: .function,
             sourceLocationRange: referrerMethodLocationRange,
             definitionUSRs: [referrerMethodUSR],
@@ -103,7 +103,7 @@ public extension RootDirectory {
             ... Location(fullPath: referencedFilePath, line: 4, column: 1)
         var referencedStruct = AbstractDeclaration(
             id: referencedStructID,
-            name: "referencedDeclaration",
+            hierarchicalNames: ["referencedDeclaration"],
             kind: .struct,
             sourceLocationRange: referencedStructLocationRange,
             definitionUSRs: [referencedStructUSR],
@@ -115,7 +115,7 @@ public extension RootDirectory {
             ... Location(fullPath: referencedFilePath, line: 3, column: 1)
         let referencedMethod = AbstractDeclaration(
             id: referencedMethodID,
-            name: "referencedMethod",
+            hierarchicalNames: ["referencedDeclaration", "referencedMethod"],
             kind: .function,
             sourceLocationRange: referencedMethodLocationRange,
             definitionUSRs: [referencedMethodUSR],
@@ -137,7 +137,7 @@ public extension RootDirectory {
             ... Location(fullPath: referencedTypeFilePath, line: 4, column: 1)
         var referencedType = AbstractDeclaration(
             id: referencedTypeID,
-            name: "referencedType",
+            hierarchicalNames: ["referencedType"],
             kind: .struct,
             sourceLocationRange: referencedTypeLocationRange,
             definitionUSRs: [referencedTypeUSR],
@@ -149,7 +149,7 @@ public extension RootDirectory {
             ... Location(fullPath: referencedTypeFilePath, line: 3, column: 1)
         let notUsedMethod = AbstractDeclaration(
             id: notUsedMethodID,
-            name: "notUsedMethod",
+            hierarchicalNames: ["referencedType", "notUsedMethod"],
             kind: .function,
             sourceLocationRange: notUsedMethodLocationRange,
             definitionUSRs: [notUsedMethodUSR],
