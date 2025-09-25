@@ -10,7 +10,7 @@ import IndexStore
 public struct RootDirectory: Equatable {
     public let directory: Directory
     let keyPathTable: KeyPathTable
-    let usrStore: USRStore
+    let dependenciesStore: DependenciesStore
 
     public func getDeclaration(withUSR usr: USR) -> AbstractDeclaration? {
         guard let keyPath = keyPathTable.abstractDeclarations[usr] else {
@@ -21,14 +21,14 @@ public struct RootDirectory: Equatable {
     }
 
     public func getReferrers(referencedUSR: USR) -> [AbstractDeclaration] {
-        guard let occurrences = usrStore.referrerUSRs[referencedUSR] else {
+        guard let referrerUSRs = dependenciesStore.referrerUSRs[referencedUSR] else {
             return []
         }
 
         var referrerDeclarations: [AbstractDeclaration] = []
 
-        for occurrence in occurrences {
-            guard let referrer = getDeclaration(withUSR: occurrence.usr) else {
+        for referrerUSR in referrerUSRs {
+            guard let referrer = getDeclaration(withUSR: referrerUSR) else {
                 continue
             }
             referrerDeclarations.append(referrer)
@@ -38,14 +38,14 @@ public struct RootDirectory: Equatable {
     }
 
     public func getReferenced(referrerUSR: USR) -> [AbstractDeclaration] {
-        guard let occurrences = usrStore.referencedUSRs[referrerUSR] else {
+        guard let referencedUSRs = dependenciesStore.referencedUSRs[referrerUSR] else {
             return []
         }
 
         var referencedDeclaraions: [AbstractDeclaration] = []
 
-        for occurrence in occurrences {
-            guard let referenced = getDeclaration(withUSR: occurrence.usr) else {
+        for referencedUSR in referencedUSRs {
+            guard let referenced = getDeclaration(withUSR: referencedUSR) else {
                 continue
             }
             referencedDeclaraions.append(referenced)
@@ -207,30 +207,29 @@ public extension RootDirectory {
             ],
         )
 
-        // USRStore
+        // DependenciesStore
 
-        let usrStore = USRStore(
-            definitionUSRs: [:],
+        let dependenciesStore = DependenciesStore(
             referrerUSRs: [
-                referencedMethodUSR: [Occurrence(usr: referrerMethodUSR, location: referrerMethodLocationRange.upperBound)],
+                referencedMethodUSR: [referrerMethodUSR],
                 referencedTypeUSR: [
-                    Occurrence(usr: referrerMethodUSR, location: referrerMethodLocationRange.upperBound),
-                    Occurrence(usr: referencedMethodUSR, location: referencedMethodLocationRange.upperBound),
+                    referrerMethodUSR,
+                    referencedMethodUSR,
                 ],
             ],
             referencedUSRs: [
                 referrerMethodUSR: [
-                    Occurrence(usr: referencedMethodUSR, location: referencedMethodLocationRange.upperBound),
-                    Occurrence(usr: referencedTypeUSR, location: referencedTypeLocationRange.upperBound),
+                    referencedMethodUSR,
+                    referencedTypeUSR,
                 ],
-                referencedMethodUSR: [Occurrence(usr: referencedTypeUSR, location: referencedTypeLocationRange.upperBound)],
+                referencedMethodUSR: [referencedTypeUSR],
             ],
         )
 
         return RootDirectory(
             directory: directory,
             keyPathTable: keyPathTable,
-            usrStore: usrStore,
+            dependenciesStore: dependenciesStore,
         )
     }
 }

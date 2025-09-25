@@ -36,6 +36,16 @@ public struct AbstractDeclaration: Identifiable, Equatable, Hashable {
 
     public let kind: Kind
 
+    var childDeclarations: [AbstractDeclaration] {
+        var array = variables.elements
+        array.append(contentsOf: functions)
+        array.append(contentsOf: cases)
+        array.append(contentsOf: nestingStructs)
+        array.append(contentsOf: nestingClasses)
+        array.append(contentsOf: nestingEnums)
+        return array
+    }
+
 //    var swiftDeclaration: SwiftDeclaration {
 //        switch kind {
 //        case .struct:

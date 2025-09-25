@@ -14,7 +14,7 @@ import SwiftSyntax
 
 final class AbstractDeclarationVisitor: SyntaxVisitor {
     private let fullPath: String
-    private let usrStore: USRStore
+    private let indexStoreResponse: IndexStoreResponse
     private let sourceLocationConverter: SourceLocationConverter
     private var abstractDeclarationsBuffer: [AbstractDeclaration] = []
     private var hierarchicalNames: [String] = []
@@ -25,11 +25,11 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
 
     init(
         in fullPath: String,
-        usrStore: USRStore,
+        indexStoreResponse: IndexStoreResponse,
         sourceLocationConverter: SourceLocationConverter,
     ) {
         self.fullPath = fullPath
-        self.usrStore = usrStore
+        self.indexStoreResponse = indexStoreResponse
         self.sourceLocationConverter = sourceLocationConverter
 
         super.init(viewMode: .sourceAccurate)
@@ -63,19 +63,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
             line: nameLocation.line,
             column: nameLocation.column,
         )
-        if let definitionUSRs = usrStore.definitionUSRs[identifierLocation] {
-            abstractDeclaration.definitionUSRs = definitionUSRs
-
-            // FIXME: It seems that the USRs of dependent symbols can be retrieved from the USRStore, using the USR of this declaration as the key.
-//            definitionUSRs.forEach { definitionUSR in
-//                if let callersUSRs = usrStore.referrerUSRs[definitionUSR] {
-//                    abstractDeclaration.callersUSRs = abstractDeclaration.callersUSRs.union(callersUSRs)
-//                }
-//                if let calleesUSRs = usrStore.referencedUSRs[definitionUSR] {
-//                    abstractDeclaration.calleesUSRs = abstractDeclaration.calleesUSRs.union(calleesUSRs)
-//                }
-//            }
-        }
+        abstractDeclaration.definitionUSRs = indexStoreResponse.definitionUSRs[identifierLocation] ?? [USR(uuid().uuidString)]
 
         abstractDeclarationsBuffer.append(abstractDeclaration)
 
@@ -126,18 +114,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
             line: nameLocation.line,
             column: nameLocation.column,
         )
-        if let definitionUSRs = usrStore.definitionUSRs[identifierLocation] {
-            abstractDeclaration.definitionUSRs = definitionUSRs
-
-//            definitionUSRs.forEach { definitionUSR in
-//                if let callersUSRs = usrStore.referrerUSRs[definitionUSR] {
-//                    abstractDeclaration.callersUSRs = abstractDeclaration.callersUSRs.union(callersUSRs)
-//                }
-//                if let calleesUSRs = usrStore.referencedUSRs[definitionUSR] {
-//                    abstractDeclaration.calleesUSRs = abstractDeclaration.calleesUSRs.union(calleesUSRs)
-//                }
-//            }
-        }
+        abstractDeclaration.definitionUSRs = indexStoreResponse.definitionUSRs[identifierLocation] ?? [USR(uuid().uuidString)]
 
         abstractDeclarationsBuffer.append(abstractDeclaration)
 
@@ -188,18 +165,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
             line: nameLocation.line,
             column: nameLocation.column,
         )
-        if let definitionUSRs = usrStore.definitionUSRs[identifierLocation] {
-            abstractDeclaration.definitionUSRs = definitionUSRs
-
-//            definitionUSRs.forEach { definitionUSR in
-//                if let callersUSRs = usrStore.referrerUSRs[definitionUSR] {
-//                    abstractDeclaration.callersUSRs = abstractDeclaration.callersUSRs.union(callersUSRs)
-//                }
-//                if let calleesUSRs = usrStore.referencedUSRs[definitionUSR] {
-//                    abstractDeclaration.calleesUSRs = abstractDeclaration.calleesUSRs.union(calleesUSRs)
-//                }
-//            }
-        }
+        abstractDeclaration.definitionUSRs = indexStoreResponse.definitionUSRs[identifierLocation] ?? [USR(uuid().uuidString)]
 
         abstractDeclarationsBuffer.append(abstractDeclaration)
 
@@ -254,18 +220,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
                     line: nameLocation.line,
                     column: nameLocation.column,
                 )
-                if let definitionUSRs = usrStore.definitionUSRs[identifierLocation] {
-                    abstractDeclaration.definitionUSRs = definitionUSRs
-
-//                    definitionUSRs.forEach { definitionUSR in
-//                        if let callersUSRs = usrStore.referrerUSRs[definitionUSR] {
-//                            abstractDeclaration.callersUSRs = abstractDeclaration.callersUSRs.union(callersUSRs)
-//                        }
-//                        if let calleesUSRs = usrStore.referencedUSRs[definitionUSR] {
-//                            abstractDeclaration.calleesUSRs = abstractDeclaration.calleesUSRs.union(calleesUSRs)
-//                        }
-//                    }
-                }
+                abstractDeclaration.definitionUSRs = indexStoreResponse.definitionUSRs[identifierLocation] ?? [USR(uuid().uuidString)]
 
                 abstractDeclarationsBuffer.append(abstractDeclaration)
             }
@@ -363,18 +318,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
             line: nameLocation.line,
             column: nameLocation.column,
         )
-        if let definitionUSRs = usrStore.definitionUSRs[identifierLocation] {
-            abstractDeclaration.definitionUSRs = definitionUSRs
-
-//            definitionUSRs.forEach { definitionUSR in
-//                if let callersUSRs = usrStore.referrerUSRs[definitionUSR] {
-//                    abstractDeclaration.callersUSRs = abstractDeclaration.callersUSRs.union(callersUSRs)
-//                }
-//                if let calleesUSRs = usrStore.referencedUSRs[definitionUSR] {
-//                    abstractDeclaration.calleesUSRs = abstractDeclaration.calleesUSRs.union(calleesUSRs)
-//                }
-//            }
-        }
+        abstractDeclaration.definitionUSRs = indexStoreResponse.definitionUSRs[identifierLocation] ?? [USR(uuid().uuidString)]
 
         abstractDeclarationsBuffer.append(abstractDeclaration)
 

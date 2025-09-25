@@ -1,5 +1,5 @@
 //
-//  USRStoreClient.swift
+//  IndexStoreClient.swift
 //  Package
 //
 //  Created by Ockey on 2025/09/11.
@@ -12,16 +12,15 @@ import Location
 import SwiftIndexStore
 
 @DependencyClient
-public struct USRStoreClient: Sendable {
-    public var extract: @Sendable (_ indexStoreURL: URL, _ projectRootURL: URL) async throws -> USRStore
+public struct IndexStoreClient: Sendable {
+    public var extract: @Sendable (_ indexStoreURL: URL, _ projectRootURL: URL) async throws -> IndexStoreResponse
 }
 
-extension USRStoreClient: DependencyKey {
+extension IndexStoreClient: DependencyKey {
     public static let liveValue: Self = Self { indexStoreURL, projectRootURL in
         let indexStore = try IndexStore.open(store: indexStoreURL, lib: .open())
         var definitionUSRs: [Location: Set<USR>] = [:]
-        var referrerUSRs: [USR: Set<Occurrence>] = [:]
-        var referencedUSRs: [USR: Set<Occurrence>] = [:]
+        var referenceOccurrences: [String: [Occurrence]] = [:]
 
         try indexStore.forEachUnits { unit in
             try indexStore.forEachRecordDependencies(for: unit) { dependency in
@@ -47,15 +46,9 @@ extension USRStoreClient: DependencyKey {
                         return true
                     }
 
-                    if occurrence.roles.contains(.reference) {
-                        indexStore.forEachRelations(for: occurrence) { relation in
-                            guard let referrerUSR = relation.symbol.usr else {
-                                return true
-                            }
-                            referrerUSRs[USR(occurrenceUSR), default: []].insert(Occurrence(usr: USR(referrerUSR), location: location))
-                            referencedUSRs[USR(referrerUSR), default: []].insert(Occurrence(usr: USR(occurrenceUSR), location: location))
-                            return true
-                        }
+                    if occurrence.roles.contains(.reference),
+                       let referencedUSR = occurrence.symbol.usr {
+                        referenceOccurrences[fullPath, default: []].append(Occurrence(usr: USR(referencedUSR), location: location))
                     }
                     return true
                 } // try indexStore.forEachOccurrences(for: record)
@@ -64,17 +57,16 @@ extension USRStoreClient: DependencyKey {
             return true
         } // try indexStore.forEachUnits
 
-        return USRStore(
+        return IndexStoreResponse(
             definitionUSRs: definitionUSRs,
-            referrerUSRs: referrerUSRs,
-            referencedUSRs: referencedUSRs,
+            referenceOccurrences: referenceOccurrences,
         )
     }
 }
 
 public extension DependencyValues {
-    var usrStoreClient: USRStoreClient {
-        get { self[USRStoreClient.self] }
-        set { self[USRStoreClient.self] = newValue }
+    var indexStoreClient: IndexStoreClient {
+        get { self[IndexStoreClient.self] }
+        set { self[IndexStoreClient.self] = newValue }
     }
 }
