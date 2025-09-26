@@ -88,6 +88,7 @@ private extension RootDirectoryClient {
 
                 case let .file(file):
                     files.append(file)
+                    dependenciesStore.merge(with: DependenciesStoreGenerator.generateWithFile(file, indexStoreResponse: indexStoreResponse))
                 }
             }
         }
