@@ -37,6 +37,10 @@ let package = Package(
             branch: "master",
         ),
         .package(
+            url: "https://github.com/apple/swift-algorithms",
+            from: "1.2.1",
+        ),
+        .package(
             url: "https://github.com/swiftlang/swift-syntax.git",
             exact: "601.0.1",
         ),
@@ -69,6 +73,7 @@ let package = Package(
                 .product(name: "IdentifiedCollections", package: "swift-identified-collections"),
                 .product(name: "Dependencies", package: "swift-dependencies"),
                 .product(name: "DependenciesMacros", package: "swift-dependencies"),
+                .product(name: "Algorithms", package: "swift-algorithms"),
                 .product(name: "SwiftParser", package: "swift-syntax"),
                 .product(name: "SwiftSyntax", package: "swift-syntax"),
             ],

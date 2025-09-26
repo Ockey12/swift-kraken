@@ -5,7 +5,10 @@
 //  Created by Ockey on 2025/09/25.
 //
 
+import Algorithms
+import Foundation
 import IndexStore
+import Location
 
 enum DependenciesStoreGenerator {
     static func generateWithFile(_ file: File, indexStoreResponse: IndexStoreResponse) -> DependenciesStore {
@@ -29,9 +32,7 @@ enum DependenciesStoreGenerator {
 
     static func generateWithDeclaration(_ declaration: AbstractDeclaration, occurrence: Occurrence) -> DependenciesStore {
         var store = DependenciesStore(referrerUSRs: [:], referencedUSRs: [:])
-        guard let childDeclaration = declaration.childDeclarations.first(where: {
-            $0.sourceLocationRange.contains(occurrence.location)
-        }) else {
+        guard let childDeclaration = declaration.childDeclarations.declaration(containing: occurrence.location) else {
             declaration.definitionUSRs.forEach { referrerUSR in
                 store.referrerUSRs[occurrence.usr, default: []].append(referrerUSR)
                 store.referencedUSRs[referrerUSR, default: []].append(occurrence.usr)
@@ -40,5 +41,17 @@ enum DependenciesStoreGenerator {
         }
 
         return generateWithDeclaration(childDeclaration, occurrence: occurrence)
+    }
+}
+
+private extension [AbstractDeclaration] {
+    func declaration(containing location: Location) -> Element? {
+        guard !isEmpty else {
+            return nil
+        }
+
+        let index = partitioningIndex { $0.sourceLocationRange.contains(location) }
+
+        return index == endIndex ? nil : self[index]
     }
 }
