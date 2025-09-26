@@ -10,7 +10,7 @@ import IdentifiedCollections
 import IndexStore
 import Location
 
-public struct AbstractDeclaration: Identifiable, Equatable, Hashable {
+public struct AbstractDeclaration: Identifiable, Equatable, Hashable, Sendable {
     public let id: UUID
     public var hierarchicalNames: [String]
     public var name: String? {
@@ -117,7 +117,7 @@ public struct AbstractDeclaration: Identifiable, Equatable, Hashable {
 }
 
 public extension AbstractDeclaration {
-    enum Kind {
+    enum Kind: Sendable {
         case `struct`
         case `class`
         case `enum`

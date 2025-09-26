@@ -7,7 +7,7 @@
 
 import IndexStore
 
-public struct DependenciesStore: Equatable {
+public struct DependenciesStore: Equatable, Sendable {
     /// Store, in a dictionary, the USRs of other symbols that reference a symbol X. The key is the USR of symbol X, and the value is the USRs of the symbols that reference X.
     public var referrerUSRs: [USR: [USR]]
 

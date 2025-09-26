@@ -7,7 +7,7 @@
 
 import IdentifiedCollections
 
-public struct Directory: Identifiable, Equatable, Hashable {
+public struct Directory: Identifiable, Equatable, Hashable, Sendable {
     public var id: String {
         fullPath
     }

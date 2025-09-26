@@ -26,7 +26,7 @@ extension RootDirectoryClient: DependencyKey {
             projectRootURL: rootDirectoryURL,
         )
 
-        let (rootDirectory, dependenciesStore) = try extractDirectory(from: rootDirectoryURL, indexStoreResponse: indexStoreResponse)
+        let (rootDirectory, dependenciesStore) = try await extractDirectory(from: rootDirectoryURL, indexStoreResponse: indexStoreResponse)
 
         return RootDirectory(
             directory: rootDirectory,
@@ -44,7 +44,12 @@ public extension DependencyValues {
 }
 
 private extension RootDirectoryClient {
-    static func extractDirectory(from url: URL, indexStoreResponse: IndexStoreResponse) throws -> (Directory, DependenciesStore) {
+    static func extractDirectory(from url: URL, indexStoreResponse: IndexStoreResponse) async throws -> (Directory, DependenciesStore) {
+        enum TaskResult: Sendable {
+            case directory(Directory, DependenciesStore)
+            case file(File)
+        }
+
         let fileManager = FileManager.default
         let items = try fileManager.contentsOfDirectory(
             at: url,
@@ -56,19 +61,34 @@ private extension RootDirectoryClient {
         var files: IdentifiedArrayOf<File> = []
         var dependenciesStore = DependenciesStore(referrerUSRs: [:], referencedUSRs: [:])
 
-        for itemURL in items {
-            let resourceValues = try itemURL.resourceValues(forKeys: [.isDirectoryKey])
+        try await withThrowingTaskGroup(of: TaskResult?.self) { group in
+            for itemURL in items {
+                let resourceValues = try itemURL.resourceValues(forKeys: [.isDirectoryKey])
+                group.addTask {
+                    if resourceValues.isDirectory == true {
+                        let (subDirectory, store) = try await extractDirectory(from: itemURL, indexStoreResponse: indexStoreResponse)
+                        return TaskResult.directory(subDirectory, store)
+                    } else if itemURL.pathExtension == "swift" {
+                        let file = try extractFile(from: itemURL, indexStoreResponse: indexStoreResponse)
+                        return TaskResult.file(file)
+                    }
+                    return nil
+                }
+            }
 
-            if resourceValues.isDirectory == true {
-                let (subDirectory, store) = try extractDirectory(from: itemURL, indexStoreResponse: indexStoreResponse)
-                subDirectories.append(subDirectory)
-                dependenciesStore.merge(with: store)
-            } else if itemURL.pathExtension == "swift" {
-                let file = try extractFile(from: itemURL, indexStoreResponse: indexStoreResponse)
-                files.append(file)
-                dependenciesStore.merge(
-                    with: DependenciesStoreGenerator.generateWithFile(file, indexStoreResponse: indexStoreResponse),
-                )
+            for try await result in group {
+                guard let result else {
+                    continue
+                }
+
+                switch result {
+                case let .directory(subDirectory, store):
+                    subDirectories.append(subDirectory)
+                    dependenciesStore.merge(with: store)
+
+                case let .file(file):
+                    files.append(file)
+                }
             }
         }
 

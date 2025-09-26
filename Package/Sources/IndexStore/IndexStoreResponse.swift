@@ -7,7 +7,7 @@
 
 import Location
 
-public struct IndexStoreResponse: Equatable {
+public struct IndexStoreResponse: Equatable, Sendable {
     public let definitionUSRs: [Location: Set<USR>]
     public let referenceOccurrences: [String: [Occurrence]]
 

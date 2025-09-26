@@ -7,7 +7,7 @@
 
 import IdentifiedCollections
 
-public struct File: Identifiable, Equatable, Hashable {
+public struct File: Identifiable, Equatable, Hashable, Sendable {
     public var id: String {
         fullPath
     }
