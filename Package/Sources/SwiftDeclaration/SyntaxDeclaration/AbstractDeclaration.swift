@@ -36,15 +36,7 @@ public struct AbstractDeclaration: Identifiable, Equatable, Hashable {
 
     public let kind: Kind
 
-    var childDeclarations: [AbstractDeclaration] {
-        var array = variables.elements
-        array.append(contentsOf: functions)
-        array.append(contentsOf: cases)
-        array.append(contentsOf: nestingStructs)
-        array.append(contentsOf: nestingClasses)
-        array.append(contentsOf: nestingEnums)
-        return array
-    }
+    private(set) var childDeclarations: [AbstractDeclaration] = []
 
 //    var swiftDeclaration: SwiftDeclaration {
 //        switch kind {
@@ -109,6 +101,18 @@ public struct AbstractDeclaration: Identifiable, Equatable, Hashable {
         }
 
         return table
+    }
+
+    mutating func updatedSortedChildren() {
+        var array = variables.elements
+        array.append(contentsOf: functions)
+        array.append(contentsOf: cases)
+        array.append(contentsOf: nestingStructs)
+        array.append(contentsOf: nestingClasses)
+        array.append(contentsOf: nestingEnums)
+        childDeclarations = array.sorted(by: {
+            $0.sourceLocationRange.lowerBound < $1.sourceLocationRange.lowerBound
+        })
     }
 }
 

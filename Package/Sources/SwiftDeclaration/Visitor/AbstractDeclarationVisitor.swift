@@ -71,11 +71,12 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
     }
 
     override func visitPost(_: StructDeclSyntax) {
-        guard let structDeclaration = abstractDeclarationsBuffer.popLast(),
+        guard var structDeclaration = abstractDeclarationsBuffer.popLast(),
               case .struct = structDeclaration.kind else {
             return
         }
 
+        structDeclaration.updatedSortedChildren()
         hierarchicalNames.removeLast()
 
         if abstractDeclarationsBuffer.isEmpty {
@@ -122,11 +123,12 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
     }
 
     override func visitPost(_: ClassDeclSyntax) {
-        guard let classDeclaration = abstractDeclarationsBuffer.popLast(),
+        guard var classDeclaration = abstractDeclarationsBuffer.popLast(),
               case .class = classDeclaration.kind else {
             return
         }
 
+        classDeclaration.updatedSortedChildren()
         hierarchicalNames.removeLast()
 
         if abstractDeclarationsBuffer.isEmpty {
@@ -173,11 +175,12 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
     }
 
     override func visitPost(_: EnumDeclSyntax) {
-        guard let enumDeclaration = abstractDeclarationsBuffer.popLast(),
+        guard var enumDeclaration = abstractDeclarationsBuffer.popLast(),
               case .enum = enumDeclaration.kind else {
             return
         }
 
+        enumDeclaration.updatedSortedChildren()
         hierarchicalNames.removeLast()
 
         if abstractDeclarationsBuffer.isEmpty {
@@ -270,10 +273,11 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
         }
 
         for _ in 0 ..< variableCount {
-            guard let variableDeclaration = abstractDeclarationsBuffer.popLast(),
+            guard var variableDeclaration = abstractDeclarationsBuffer.popLast(),
                   case .variable = variableDeclaration.kind else {
                 break
             }
+            variableDeclaration.updatedSortedChildren()
             variables.append(variableDeclaration)
         }
 
@@ -326,11 +330,12 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
     }
 
     override func visitPost(_: FunctionDeclSyntax) {
-        guard let functionDeclaration = abstractDeclarationsBuffer.popLast(),
+        guard var functionDeclaration = abstractDeclarationsBuffer.popLast(),
               case .function = functionDeclaration.kind else {
             return
         }
 
+        functionDeclaration.updatedSortedChildren()
         hierarchicalNames.removeLast()
 
         if abstractDeclarationsBuffer.isEmpty {
