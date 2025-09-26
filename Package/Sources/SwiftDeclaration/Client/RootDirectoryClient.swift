@@ -57,10 +57,9 @@ private extension RootDirectoryClient {
         var dependenciesStore = DependenciesStore(referrerUSRs: [:], referencedUSRs: [:])
 
         for itemURL in items {
-            var isDirectory: ObjCBool = false
-            fileManager.fileExists(atPath: itemURL.path(), isDirectory: &isDirectory)
+            let resourceValues = try itemURL.resourceValues(forKeys: [.isDirectoryKey])
 
-            if isDirectory.boolValue {
+            if resourceValues.isDirectory == true {
                 let (subDirectory, store) = try extractDirectory(from: itemURL, indexStoreResponse: indexStoreResponse)
                 subDirectories.append(subDirectory)
                 dependenciesStore.merge(with: store)
