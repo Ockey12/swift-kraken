@@ -538,7 +538,7 @@ final class ScrollViewController: NSViewController {
 
         let titleLabel = NSTextField(labelWithString: "")
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        titleLabel.lineBreakMode = .byTruncatingTail
+        titleLabel.lineBreakMode = .byTruncatingHead
         titleLabel.font = .systemFont(ofSize: NSFont.systemFontSize, weight: .semibold)
         titleLabel.alignment = .center
         headerView.addSubview(titleLabel)
