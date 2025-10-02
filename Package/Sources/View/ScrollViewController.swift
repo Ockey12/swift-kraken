@@ -100,6 +100,40 @@ private final class ColumnViewState {
 }
 
 final class ScrollViewController: NSViewController {
+    private final class DeclarationOutlineView: NSOutlineView {
+        var onOpenInXcode: ((AbstractDeclaration) -> Void)?
+
+        override func menu(for event: NSEvent) -> NSMenu? {
+            let windowPoint = event.locationInWindow
+            let point = convert(windowPoint, from: nil)
+            let row = row(at: point)
+
+            guard row >= 0,
+                  let node = item(atRow: row) as? DeclarationOutlineDataSource.Node else {
+                return super.menu(for: event)
+            }
+
+            if selectedRowIndexes.contains(row) == false {
+                selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
+            }
+
+            let menu = NSMenu()
+            let openItem = NSMenuItem(title: "Open in Xcode", action: #selector(openInXcode(_:)), keyEquivalent: "")
+            openItem.target = self
+            openItem.representedObject = node
+            menu.addItem(openItem)
+            return menu
+        }
+
+        @objc
+        private func openInXcode(_ sender: NSMenuItem) {
+            guard let node = sender.representedObject as? DeclarationOutlineDataSource.Node else {
+                return
+            }
+            onOpenInXcode?(node.declaration)
+        }
+    }
+
     private final class ColumnContext {
         enum DependencyFilter: Int, CaseIterable { case all = 0, referrers = 1, referenced = 2 }
         let containerView: NSView
@@ -570,7 +604,7 @@ final class ScrollViewController: NSViewController {
         scrollView.horizontalScrollElasticity = .none
         containerView.addSubview(scrollView)
 
-        let outlineView = NSOutlineView()
+        let outlineView = DeclarationOutlineView()
         outlineView.headerView = nil
         outlineView.columnAutoresizingStyle = .firstColumnOnlyAutoresizingStyle
         outlineView.usesAlternatingRowBackgroundColors = false
@@ -597,6 +631,9 @@ final class ScrollViewController: NSViewController {
         let ds = DeclarationOutlineDataSource()
         outlineView.dataSource = ds
         outlineView.delegate = ds
+        outlineView.onOpenInXcode = { [weak self] declaration in
+            self?.openDeclarationInXcode(declaration)
+        }
 
         // Inject callback to open dependencies column when arrow tapped
         ds.onArrowTapped = { [weak self] declaration, context in
@@ -923,6 +960,24 @@ final class ScrollViewController: NSViewController {
         } else {
             clipView.setBoundsOrigin(targetOrigin)
             scrollView.reflectScrolledClipView(clipView)
+        }
+    }
+
+    private func openDeclarationInXcode(_ declaration: AbstractDeclaration) {
+        let location = declaration.sourceLocationRange.lowerBound
+        guard location.fullPath.isEmpty == false else {
+            return
+        }
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/xed")
+        process.arguments = ["--line", String(max(location.line, 1)), location.fullPath]
+
+        do {
+            try process.run()
+        } catch {
+            NSLog("Failed to open Xcode via xed: %@", error.localizedDescription)
+            NSSound.beep()
         }
     }
 }
