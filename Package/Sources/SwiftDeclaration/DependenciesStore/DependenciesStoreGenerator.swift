@@ -18,7 +18,7 @@ enum DependenciesStoreGenerator {
         }
 
         for occurrence in occurrences {
-            guard let topDeclaration = file.abstractDeclarations.first(where: {
+            guard let topDeclaration = file.topDeclarations.first(where: {
                 $0.sourceLocationRange.contains(occurrence.location)
             }) else {
                 continue
@@ -32,7 +32,7 @@ enum DependenciesStoreGenerator {
 
     static func generateWithDeclaration(_ declaration: AbstractDeclaration, occurrence: Occurrence) -> DependenciesStore {
         var store = DependenciesStore(referrerUSRs: [:], referencedUSRs: [:])
-        guard let childDeclaration = declaration.childDeclarations.declaration(containing: occurrence.location) else {
+        guard let childDeclaration = declaration.sortedChildren.declaration(containing: occurrence.location) else {
             declaration.definitionUSRs.forEach { referrerUSR in
                 store.referrerUSRs[occurrence.usr, default: []].append(referrerUSR)
                 store.referencedUSRs[referrerUSR, default: []].append(occurrence.usr)

@@ -19,7 +19,7 @@ public struct IndexStoreClient: Sendable {
 extension IndexStoreClient: DependencyKey {
     public static let liveValue: Self = Self { indexStoreURL, projectRootURL in
         let indexStore = try IndexStore.open(store: indexStoreURL, lib: .open())
-        var definitionUSRs: [Location: Set<USR>] = [:]
+        var definitionUSRs: [Location: [USR]] = [:]
         var referenceOccurrences: [String: [Occurrence]] = [:]
 
         try indexStore.forEachUnits { unit in
@@ -42,7 +42,7 @@ extension IndexStoreClient: DependencyKey {
                     )
 
                     if occurrence.roles.contains(.definition) {
-                        definitionUSRs[location, default: []].insert(USR(occurrenceUSR))
+                        definitionUSRs[location, default: []].append(USR(occurrenceUSR))
                         return true
                     }
 

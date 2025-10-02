@@ -22,7 +22,7 @@ public struct AbstractDeclaration: Identifiable, Equatable, Hashable, Sendable {
     }
 
     public let sourceLocationRange: ClosedRange<Location>
-    public var definitionUSRs: Set<USR>
+    public var definitionUSRs: [USR]
     public var callersUSRs: Set<USR>
     public var calleesUSRs: Set<USR>
 
@@ -36,7 +36,7 @@ public struct AbstractDeclaration: Identifiable, Equatable, Hashable, Sendable {
 
     public let kind: Kind
 
-    private(set) var childDeclarations: [AbstractDeclaration] = []
+    private(set) var sortedChildren: [AbstractDeclaration] = []
 
 //    var swiftDeclaration: SwiftDeclaration {
 //        switch kind {
@@ -60,7 +60,7 @@ public struct AbstractDeclaration: Identifiable, Equatable, Hashable, Sendable {
         hierarchicalNames: [String],
         kind: Kind,
         sourceLocationRange: ClosedRange<Location>,
-        definitionUSRs: Set<USR> = [],
+        definitionUSRs: [USR] = [],
         callersUSRs: Set<USR> = [],
         calleesUSRs: Set<USR> = [],
         variables: IdentifiedArrayOf<AbstractDeclaration> = [],
@@ -110,7 +110,7 @@ public struct AbstractDeclaration: Identifiable, Equatable, Hashable, Sendable {
         array.append(contentsOf: nestingStructs)
         array.append(contentsOf: nestingClasses)
         array.append(contentsOf: nestingEnums)
-        childDeclarations = array.sorted(by: {
+        sortedChildren = array.sorted(by: {
             $0.sourceLocationRange.lowerBound < $1.sourceLocationRange.lowerBound
         })
     }

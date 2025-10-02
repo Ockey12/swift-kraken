@@ -8,11 +8,11 @@
 import Location
 
 public struct IndexStoreResponse: Equatable, Sendable {
-    public let definitionUSRs: [Location: Set<USR>]
+    public let definitionUSRs: [Location: [USR]]
     public let referenceOccurrences: [String: [Occurrence]]
 
     public init(
-        definitionUSRs: [Location: Set<USR>],
+        definitionUSRs: [Location: [USR]],
         referenceOccurrences: [String: [Occurrence]],
     ) {
         self.definitionUSRs = definitionUSRs

@@ -90,7 +90,7 @@ public extension RootDirectory {
         let referrerFile = File(
             fullPath: referrerFilePath,
             sourceCode: "",
-            abstractDeclarations: [referrerStruct],
+            topDeclarations: [referrerStruct],
         )
 
         // referenced method
@@ -125,7 +125,7 @@ public extension RootDirectory {
         let referencedFile = File(
             fullPath: referencedFilePath,
             sourceCode: "",
-            abstractDeclarations: [referencedStruct],
+            topDeclarations: [referencedStruct],
         )
 
         // referenced type
@@ -159,7 +159,7 @@ public extension RootDirectory {
         let referencedTypeFile = File(
             fullPath: referencedTypeFilePath,
             sourceCode: "",
-            abstractDeclarations: [referencedType],
+            topDeclarations: [referencedType],
         )
 
         // root directory
@@ -179,15 +179,15 @@ public extension RootDirectory {
         let rootDirectoryKeyPath: KeyPath<Directory?, Directory?> = \.?.self
 
         let referrerFileKeyPath: KeyPath<Directory?, File?> = \.?.files[id: referrerFilePath]
-        let referrerStructKeyPath: KeyPath<Directory?, AbstractDeclaration?> = referrerFileKeyPath.appending(path: \.?.abstractDeclarations[id: referrerStructID])
+        let referrerStructKeyPath: KeyPath<Directory?, AbstractDeclaration?> = referrerFileKeyPath.appending(path: \.?.topDeclarations[id: referrerStructID])
         let referrerMethodKeyPath: KeyPath<Directory?, AbstractDeclaration?> = referrerStructKeyPath.appending(path: \.?.functions[id: referrerMethodID])
 
         let referencedFileKeyPath: KeyPath<Directory?, File?> = \.?.files[id: referencedFilePath]
-        let referencedStructKeyPath: KeyPath<Directory?, AbstractDeclaration?> = referencedFileKeyPath.appending(path: \.?.abstractDeclarations[id: referencedStructID])
+        let referencedStructKeyPath: KeyPath<Directory?, AbstractDeclaration?> = referencedFileKeyPath.appending(path: \.?.topDeclarations[id: referencedStructID])
         let referencedMethodKeyPath: KeyPath<Directory?, AbstractDeclaration?> = referencedStructKeyPath.appending(path: \.?.functions[id: referencedMethodID])
 
         let referencedTypeFileKeyPath: KeyPath<Directory?, File?> = \.?.files[id: referencedTypeFilePath]
-        let referencedTypeKeyPath: KeyPath<Directory?, AbstractDeclaration?> = referencedTypeFileKeyPath.appending(path: \.?.abstractDeclarations[id: referencedTypeID])
+        let referencedTypeKeyPath: KeyPath<Directory?, AbstractDeclaration?> = referencedTypeFileKeyPath.appending(path: \.?.topDeclarations[id: referencedTypeID])
         let notUsedMethodKeyPath: KeyPath<Directory?, AbstractDeclaration?> = referencedTypeKeyPath.appending(path: \.?.functions[id: notUsedMethodID])
 
         let keyPathTable = KeyPathTable(

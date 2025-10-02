@@ -15,21 +15,15 @@ public struct File: Identifiable, Equatable, Hashable, Sendable {
     public let fullPath: String
 
     public let sourceCode: String
-    public internal(set) var abstractDeclarations: IdentifiedArrayOf<AbstractDeclaration>
-//    public var swiftDeclarations: IdentifiedArrayOf<SwiftDeclaration> {
-//        IdentifiedArray(
-//            uniqueElements:
-//            abstractDeclarations.map(\.swiftDeclaration),
-//        )
-//    }
+    public internal(set) var topDeclarations: IdentifiedArrayOf<AbstractDeclaration>
 
     func generateKeyPath(fromRootDirectory keyPath: KeyPath<Directory?, File?>) -> KeyPathTable {
         var table = KeyPathTable(directories: [:], files: [:], abstractDeclarations: [:])
         table.files[id] = keyPath
 
-        for declaration in abstractDeclarations {
+        for declaration in topDeclarations {
             table.merge(declaration.generateKeyPath(
-                fromRootDirectory: keyPath.appending(path: \.?.abstractDeclarations[id: declaration.id]),
+                fromRootDirectory: keyPath.appending(path: \.?.topDeclarations[id: declaration.id]),
             ))
         }
 

@@ -112,7 +112,7 @@ private extension RootDirectoryClient {
         return File(
             fullPath: fullPath,
             sourceCode: sourceCode,
-            abstractDeclarations: visitor.result,
+            topDeclarations: visitor.result,
         )
     }
 }
