@@ -20,17 +20,18 @@ public struct RootDirectoryClient: Sendable {
 
 extension RootDirectoryClient: DependencyKey {
     public static let liveValue: Self = Self { rootDirectoryURL, indexStoreURL in
-        @Dependency(\.usrStoreClient) var usrStoreClient
-        let usrStore = try await usrStoreClient.extract(
+        @Dependency(\.indexStoreClient) var indexStoreClient
+        let indexStoreResponse = try await indexStoreClient.extract(
             indexStoreURL: indexStoreURL,
             projectRootURL: rootDirectoryURL,
         )
 
-        let rootDirectory = try extractDirectory(from: rootDirectoryURL, usrStore: usrStore)
+        let (rootDirectory, dependenciesStore) = try await extractDirectory(from: rootDirectoryURL, indexStoreResponse: indexStoreResponse)
 
         return RootDirectory(
             directory: rootDirectory,
             keyPathTable: rootDirectory.generateKeyPath(fromRootDirectory: \.self),
+            dependenciesStore: dependenciesStore,
         )
     }
 }
@@ -43,7 +44,12 @@ public extension DependencyValues {
 }
 
 private extension RootDirectoryClient {
-    static func extractDirectory(from url: URL, usrStore: USRStore) throws -> Directory {
+    static func extractDirectory(from url: URL, indexStoreResponse: IndexStoreResponse) async throws -> (Directory, DependenciesStore) {
+        enum TaskResult: Sendable {
+            case directory(Directory, DependenciesStore)
+            case file(File)
+        }
+
         let fileManager = FileManager.default
         let items = try fileManager.contentsOfDirectory(
             at: url,
@@ -53,35 +59,51 @@ private extension RootDirectoryClient {
 
         var subDirectories: IdentifiedArrayOf<Directory> = []
         var files: IdentifiedArrayOf<File> = []
+        var dependenciesStore = DependenciesStore(referrerUSRs: [:], referencedUSRs: [:])
 
-        for itemURL in items {
-            var isDirectory: ObjCBool = false
-            fileManager.fileExists(atPath: itemURL.path(), isDirectory: &isDirectory)
+        try await withThrowingTaskGroup(of: TaskResult?.self) { group in
+            for itemURL in items {
+                let resourceValues = try itemURL.resourceValues(forKeys: [.isDirectoryKey])
+                group.addTask {
+                    if resourceValues.isDirectory == true {
+                        let (subDirectory, store) = try await extractDirectory(from: itemURL, indexStoreResponse: indexStoreResponse)
+                        return TaskResult.directory(subDirectory, store)
+                    } else if itemURL.pathExtension == "swift" {
+                        let file = try extractFile(from: itemURL, indexStoreResponse: indexStoreResponse)
+                        return TaskResult.file(file)
+                    }
+                    return nil
+                }
+            }
 
-            if isDirectory.boolValue {
-                let subDirectory = try extractDirectory(from: itemURL, usrStore: usrStore)
-                subDirectories.append(subDirectory)
-            } else if itemURL.pathExtension == "swift" {
-                let file = try extractFile(from: itemURL, usrStore: usrStore)
-                files.append(file)
+            for try await result in group {
+                guard let result else {
+                    continue
+                }
+
+                switch result {
+                case let .directory(subDirectory, store):
+                    subDirectories.append(subDirectory)
+                    dependenciesStore.merge(with: store)
+
+                case let .file(file):
+                    files.append(file)
+                    dependenciesStore.merge(with: DependenciesStoreGenerator.generateWithFile(file, indexStoreResponse: indexStoreResponse))
+                }
             }
         }
 
-        return Directory(
-            fullPath: url.path(),
-            subDirectories: subDirectories,
-            files: files,
-        )
+        return (Directory(fullPath: url.path(), subDirectories: subDirectories, files: files), dependenciesStore)
     }
 
-    static func extractFile(from url: URL, usrStore: USRStore) throws -> File {
+    static func extractFile(from url: URL, indexStoreResponse: IndexStoreResponse) throws -> File {
         let sourceCode = try String(contentsOf: url, encoding: .utf8)
         let parsedCode = Parser.parse(source: sourceCode)
         let fullPath = url.path()
         let sourceLocationConverter = SourceLocationConverter(fileName: fullPath, tree: parsedCode)
-        let visitor = AbstractDeclarationVisitor(
+        let visitor = DeclarationVisitor(
             in: fullPath,
-            usrStore: usrStore,
+            indexStoreResponse: indexStoreResponse,
             sourceLocationConverter: sourceLocationConverter,
         )
 
@@ -90,7 +112,7 @@ private extension RootDirectoryClient {
         return File(
             fullPath: fullPath,
             sourceCode: sourceCode,
-            abstractDeclarations: visitor.result,
+            topDeclarations: visitor.result,
         )
     }
 }

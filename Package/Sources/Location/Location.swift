@@ -5,7 +5,7 @@
 //  Created by Ockey on 2025/09/08.
 //
 
-public struct Location: Equatable, Hashable {
+public struct Location: Equatable, Hashable, Sendable {
     public let fullPath: String
     public let line: Int
     public let column: Int
@@ -19,6 +19,9 @@ public struct Location: Equatable, Hashable {
 
 extension Location: Comparable {
     public static func < (lhs: Location, rhs: Location) -> Bool {
+        if lhs.fullPath != rhs.fullPath {
+            return lhs.fullPath < rhs.fullPath
+        }
         if lhs.line != rhs.line {
             return lhs.line < rhs.line
         }

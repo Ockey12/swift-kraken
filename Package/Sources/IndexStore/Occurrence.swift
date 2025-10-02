@@ -7,7 +7,12 @@
 
 import Location
 
-public struct Occurrence: Equatable, Hashable {
-    let usr: USR
-    let location: Location
+public struct Occurrence: Equatable, Hashable, Sendable {
+    public let usr: USR
+    public let location: Location
+
+    public init(usr: USR, location: Location) {
+        self.usr = usr
+        self.location = location
+    }
 }

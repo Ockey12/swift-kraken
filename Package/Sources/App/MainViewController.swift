@@ -6,6 +6,7 @@
 //
 
 import AppKit
+import View
 
 public final class MainViewController: NSViewController {
     private lazy var infoLabel: NSTextField = {

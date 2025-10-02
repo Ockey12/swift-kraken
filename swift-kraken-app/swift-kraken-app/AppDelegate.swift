@@ -7,6 +7,7 @@
 
 import App
 import Cocoa
+import View
 
 @main
 class AppDelegate: NSObject, NSApplicationDelegate {

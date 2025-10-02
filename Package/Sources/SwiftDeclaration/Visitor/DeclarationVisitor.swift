@@ -1,5 +1,5 @@
 //
-//  AbstractDeclarationVisitor.swift
+//  DeclarationVisitor.swift
 //  Package
 //
 //  Created by Ockey on 2025/09/09.
@@ -12,23 +12,24 @@ import Location
 import SwiftParser
 import SwiftSyntax
 
-final class AbstractDeclarationVisitor: SyntaxVisitor {
+final class DeclarationVisitor: SyntaxVisitor {
     private let fullPath: String
-    private let usrStore: USRStore
+    private let indexStoreResponse: IndexStoreResponse
     private let sourceLocationConverter: SourceLocationConverter
-    private var abstractDeclarationsBuffer: [AbstractDeclaration] = []
+    private var abstractDeclarationsBuffer: [Declaration] = []
+    private var hierarchicalNames: [String] = []
 
-    var result: IdentifiedArrayOf<AbstractDeclaration> = []
+    var result: IdentifiedArrayOf<Declaration> = []
 
     @Dependency(\.uuid) private var uuid
 
     init(
         in fullPath: String,
-        usrStore: USRStore,
+        indexStoreResponse: IndexStoreResponse,
         sourceLocationConverter: SourceLocationConverter,
     ) {
         self.fullPath = fullPath
-        self.usrStore = usrStore
+        self.indexStoreResponse = indexStoreResponse
         self.sourceLocationConverter = sourceLocationConverter
 
         super.init(viewMode: .sourceAccurate)
@@ -37,6 +38,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
     // MARK: struct
 
     override func visit(_ node: StructDeclSyntax) -> SyntaxVisitorContinueKind {
+        hierarchicalNames.append(node.name.text)
         let nodeRange = node.sourceRange(converter: sourceLocationConverter)
         let sourceLocationRange = Location(
             fullPath: fullPath,
@@ -48,9 +50,9 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
                 line: nodeRange.end.line,
                 column: nodeRange.end.column,
             )
-        var abstractDeclaration = AbstractDeclaration(
+        var abstractDeclaration = Declaration(
             id: uuid(),
-            name: node.name.text,
+            hierarchicalNames: hierarchicalNames,
             kind: .struct,
             sourceLocationRange: sourceLocationRange,
         )
@@ -61,19 +63,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
             line: nameLocation.line,
             column: nameLocation.column,
         )
-        if let definitionUSRs = usrStore.definitionUSRs[identifierLocation] {
-            abstractDeclaration.definitionUSRs = definitionUSRs
-
-            // FIXME: It seems that the USRs of dependent symbols can be retrieved from the USRStore, using the USR of this declaration as the key.
-//            definitionUSRs.forEach { definitionUSR in
-//                if let callersUSRs = usrStore.referrerUSRs[definitionUSR] {
-//                    abstractDeclaration.callersUSRs = abstractDeclaration.callersUSRs.union(callersUSRs)
-//                }
-//                if let calleesUSRs = usrStore.referencedUSRs[definitionUSR] {
-//                    abstractDeclaration.calleesUSRs = abstractDeclaration.calleesUSRs.union(calleesUSRs)
-//                }
-//            }
-        }
+        abstractDeclaration.definitionUSRs = indexStoreResponse.definitionUSRs[identifierLocation] ?? [USR(uuid().uuidString)]
 
         abstractDeclarationsBuffer.append(abstractDeclaration)
 
@@ -81,10 +71,13 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
     }
 
     override func visitPost(_: StructDeclSyntax) {
-        guard let structDeclaration = abstractDeclarationsBuffer.popLast(),
+        guard var structDeclaration = abstractDeclarationsBuffer.popLast(),
               case .struct = structDeclaration.kind else {
             return
         }
+
+        structDeclaration.updatedSortedChildren()
+        hierarchicalNames.removeLast()
 
         if abstractDeclarationsBuffer.isEmpty {
             result.append(structDeclaration)
@@ -97,6 +90,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
     // MARK: class
 
     override func visit(_ node: ClassDeclSyntax) -> SyntaxVisitorContinueKind {
+        hierarchicalNames.append(node.name.text)
         let nodeRange = node.sourceRange(converter: sourceLocationConverter)
         let sourceLocationRange = Location(
             fullPath: fullPath,
@@ -108,9 +102,9 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
                 line: nodeRange.end.line,
                 column: nodeRange.end.column,
             )
-        var abstractDeclaration = AbstractDeclaration(
+        var abstractDeclaration = Declaration(
             id: uuid(),
-            name: node.name.text,
+            hierarchicalNames: hierarchicalNames,
             kind: .class,
             sourceLocationRange: sourceLocationRange,
         )
@@ -121,18 +115,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
             line: nameLocation.line,
             column: nameLocation.column,
         )
-        if let definitionUSRs = usrStore.definitionUSRs[identifierLocation] {
-            abstractDeclaration.definitionUSRs = definitionUSRs
-
-//            definitionUSRs.forEach { definitionUSR in
-//                if let callersUSRs = usrStore.referrerUSRs[definitionUSR] {
-//                    abstractDeclaration.callersUSRs = abstractDeclaration.callersUSRs.union(callersUSRs)
-//                }
-//                if let calleesUSRs = usrStore.referencedUSRs[definitionUSR] {
-//                    abstractDeclaration.calleesUSRs = abstractDeclaration.calleesUSRs.union(calleesUSRs)
-//                }
-//            }
-        }
+        abstractDeclaration.definitionUSRs = indexStoreResponse.definitionUSRs[identifierLocation] ?? [USR(uuid().uuidString)]
 
         abstractDeclarationsBuffer.append(abstractDeclaration)
 
@@ -140,10 +123,13 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
     }
 
     override func visitPost(_: ClassDeclSyntax) {
-        guard let classDeclaration = abstractDeclarationsBuffer.popLast(),
+        guard var classDeclaration = abstractDeclarationsBuffer.popLast(),
               case .class = classDeclaration.kind else {
             return
         }
+
+        classDeclaration.updatedSortedChildren()
+        hierarchicalNames.removeLast()
 
         if abstractDeclarationsBuffer.isEmpty {
             result.append(classDeclaration)
@@ -156,6 +142,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
     // MARK: enum
 
     override func visit(_ node: EnumDeclSyntax) -> SyntaxVisitorContinueKind {
+        hierarchicalNames.append(node.name.text)
         let nodeRange = node.sourceRange(converter: sourceLocationConverter)
         let sourceLocationRange = Location(
             fullPath: fullPath,
@@ -167,9 +154,9 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
                 line: nodeRange.end.line,
                 column: nodeRange.end.column,
             )
-        var abstractDeclaration = AbstractDeclaration(
+        var abstractDeclaration = Declaration(
             id: uuid(),
-            name: node.name.text,
+            hierarchicalNames: hierarchicalNames,
             kind: .enum,
             sourceLocationRange: sourceLocationRange,
         )
@@ -180,18 +167,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
             line: nameLocation.line,
             column: nameLocation.column,
         )
-        if let definitionUSRs = usrStore.definitionUSRs[identifierLocation] {
-            abstractDeclaration.definitionUSRs = definitionUSRs
-
-//            definitionUSRs.forEach { definitionUSR in
-//                if let callersUSRs = usrStore.referrerUSRs[definitionUSR] {
-//                    abstractDeclaration.callersUSRs = abstractDeclaration.callersUSRs.union(callersUSRs)
-//                }
-//                if let calleesUSRs = usrStore.referencedUSRs[definitionUSR] {
-//                    abstractDeclaration.calleesUSRs = abstractDeclaration.calleesUSRs.union(calleesUSRs)
-//                }
-//            }
-        }
+        abstractDeclaration.definitionUSRs = indexStoreResponse.definitionUSRs[identifierLocation] ?? [USR(uuid().uuidString)]
 
         abstractDeclarationsBuffer.append(abstractDeclaration)
 
@@ -199,10 +175,13 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
     }
 
     override func visitPost(_: EnumDeclSyntax) {
-        guard let enumDeclaration = abstractDeclarationsBuffer.popLast(),
+        guard var enumDeclaration = abstractDeclarationsBuffer.popLast(),
               case .enum = enumDeclaration.kind else {
             return
         }
+
+        enumDeclaration.updatedSortedChildren()
+        hierarchicalNames.removeLast()
 
         if abstractDeclarationsBuffer.isEmpty {
             result.append(enumDeclaration)
@@ -231,9 +210,9 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
             let identifiers = extractIdentifiers(from: binding.pattern)
 
             for identifier in identifiers {
-                var abstractDeclaration = AbstractDeclaration(
+                var abstractDeclaration = Declaration(
                     id: uuid(),
-                    name: identifier.identifier.text,
+                    hierarchicalNames: hierarchicalNames + [identifier.identifier.text],
                     kind: .variable,
                     sourceLocationRange: sourceLocationRange,
                 )
@@ -244,18 +223,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
                     line: nameLocation.line,
                     column: nameLocation.column,
                 )
-                if let definitionUSRs = usrStore.definitionUSRs[identifierLocation] {
-                    abstractDeclaration.definitionUSRs = definitionUSRs
-
-//                    definitionUSRs.forEach { definitionUSR in
-//                        if let callersUSRs = usrStore.referrerUSRs[definitionUSR] {
-//                            abstractDeclaration.callersUSRs = abstractDeclaration.callersUSRs.union(callersUSRs)
-//                        }
-//                        if let calleesUSRs = usrStore.referencedUSRs[definitionUSR] {
-//                            abstractDeclaration.calleesUSRs = abstractDeclaration.calleesUSRs.union(calleesUSRs)
-//                        }
-//                    }
-                }
+                abstractDeclaration.definitionUSRs = indexStoreResponse.definitionUSRs[identifierLocation] ?? [USR(uuid().uuidString)]
 
                 abstractDeclarationsBuffer.append(abstractDeclaration)
             }
@@ -296,7 +264,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
     }
 
     override func visitPost(_ node: VariableDeclSyntax) {
-        var variables: [AbstractDeclaration] = []
+        var variables: [Declaration] = []
 
         var variableCount = 0
         for binding in node.bindings {
@@ -305,10 +273,11 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
         }
 
         for _ in 0 ..< variableCount {
-            guard let variableDeclaration = abstractDeclarationsBuffer.popLast(),
+            guard var variableDeclaration = abstractDeclarationsBuffer.popLast(),
                   case .variable = variableDeclaration.kind else {
                 break
             }
+            variableDeclaration.updatedSortedChildren()
             variables.append(variableDeclaration)
         }
 
@@ -328,6 +297,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
     // MARK: function
 
     override func visit(_ node: FunctionDeclSyntax) -> SyntaxVisitorContinueKind {
+        hierarchicalNames.append(node.name.text + "()")
         let nodeRange = node.sourceRange(converter: sourceLocationConverter)
         let sourceLocationRange = Location(
             fullPath: fullPath,
@@ -339,9 +309,9 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
                 line: nodeRange.end.line,
                 column: nodeRange.end.column,
             )
-        var abstractDeclaration = AbstractDeclaration(
+        var abstractDeclaration = Declaration(
             id: uuid(),
-            name: node.name.text,
+            hierarchicalNames: hierarchicalNames,
             kind: .function,
             sourceLocationRange: sourceLocationRange,
         )
@@ -352,18 +322,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
             line: nameLocation.line,
             column: nameLocation.column,
         )
-        if let definitionUSRs = usrStore.definitionUSRs[identifierLocation] {
-            abstractDeclaration.definitionUSRs = definitionUSRs
-
-//            definitionUSRs.forEach { definitionUSR in
-//                if let callersUSRs = usrStore.referrerUSRs[definitionUSR] {
-//                    abstractDeclaration.callersUSRs = abstractDeclaration.callersUSRs.union(callersUSRs)
-//                }
-//                if let calleesUSRs = usrStore.referencedUSRs[definitionUSR] {
-//                    abstractDeclaration.calleesUSRs = abstractDeclaration.calleesUSRs.union(calleesUSRs)
-//                }
-//            }
-        }
+        abstractDeclaration.definitionUSRs = indexStoreResponse.definitionUSRs[identifierLocation] ?? [USR(uuid().uuidString)]
 
         abstractDeclarationsBuffer.append(abstractDeclaration)
 
@@ -371,10 +330,13 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
     }
 
     override func visitPost(_: FunctionDeclSyntax) {
-        guard let functionDeclaration = abstractDeclarationsBuffer.popLast(),
+        guard var functionDeclaration = abstractDeclarationsBuffer.popLast(),
               case .function = functionDeclaration.kind else {
             return
         }
+
+        functionDeclaration.updatedSortedChildren()
+        hierarchicalNames.removeLast()
 
         if abstractDeclarationsBuffer.isEmpty {
             result.append(functionDeclaration)

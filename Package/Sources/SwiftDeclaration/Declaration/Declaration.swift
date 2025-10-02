@@ -1,5 +1,5 @@
 //
-//  AbstractDeclaration.swift
+//  Declaration.swift
 //  Package
 //
 //  Created by Ockey on 2025/09/09.
@@ -10,58 +10,51 @@ import IdentifiedCollections
 import IndexStore
 import Location
 
-struct AbstractDeclaration: Identifiable, Equatable, Hashable {
-    let id: UUID
-    let name: String
-    let sourceLocationRange: ClosedRange<Location>
-    var definitionUSRs: Set<USR>
-    var callersUSRs: Set<USR>
-    var calleesUSRs: Set<USR>
-
-    var variables: IdentifiedArrayOf<AbstractDeclaration>
-    var functions: IdentifiedArrayOf<AbstractDeclaration>
-    var cases: IdentifiedArrayOf<AbstractDeclaration>
-
-    var nestingStructs: IdentifiedArrayOf<AbstractDeclaration>
-    var nestingClasses: IdentifiedArrayOf<AbstractDeclaration>
-    var nestingEnums: IdentifiedArrayOf<AbstractDeclaration>
-
-    let kind: Kind
-
-    var swiftDeclaration: SwiftDeclaration {
-        switch kind {
-        case .struct:
-            .struct(StructDeclaration.generate(from: self))
-        case .class:
-            .class(ClassDeclaration.generate(from: self))
-        case .enum:
-            .enum(EnumDeclaration.generate(from: self))
-        case .variable:
-            .variable(VariableDeclaration.generate(from: self))
-        case .function:
-            .function(FunctionDeclaration.generate(from: self))
-        case .case:
-            .case(CaseDeclaration.generate(from: self))
-        }
+public struct Declaration: Identifiable, Equatable, Hashable, Sendable {
+    public let id: UUID
+    public var hierarchicalNames: [String]
+    public var name: String? {
+        hierarchicalNames.last
     }
 
-    init(
+    public var joinedHierarchicalName: String {
+        hierarchicalNames.joined(separator: ".")
+    }
+
+    public let sourceLocationRange: ClosedRange<Location>
+    public var definitionUSRs: [USR]
+    public var callersUSRs: Set<USR>
+    public var calleesUSRs: Set<USR>
+
+    public var variables: IdentifiedArrayOf<Declaration>
+    public var functions: IdentifiedArrayOf<Declaration>
+    public var cases: IdentifiedArrayOf<Declaration>
+
+    public var nestingStructs: IdentifiedArrayOf<Declaration>
+    public var nestingClasses: IdentifiedArrayOf<Declaration>
+    public var nestingEnums: IdentifiedArrayOf<Declaration>
+
+    public let kind: Kind
+
+    private(set) var sortedChildren: [Declaration] = []
+
+    public init(
         id: UUID,
-        name: String,
+        hierarchicalNames: [String],
         kind: Kind,
         sourceLocationRange: ClosedRange<Location>,
-        definitionUSRs: Set<USR> = [],
+        definitionUSRs: [USR] = [],
         callersUSRs: Set<USR> = [],
         calleesUSRs: Set<USR> = [],
-        variables: IdentifiedArrayOf<AbstractDeclaration> = [],
-        functions: IdentifiedArrayOf<AbstractDeclaration> = [],
-        cases: IdentifiedArrayOf<AbstractDeclaration> = [],
-        nestingStructs: IdentifiedArrayOf<AbstractDeclaration> = [],
-        nestingClasses: IdentifiedArrayOf<AbstractDeclaration> = [],
-        nestingEnums: IdentifiedArrayOf<AbstractDeclaration> = [],
+        variables: IdentifiedArrayOf<Declaration> = [],
+        functions: IdentifiedArrayOf<Declaration> = [],
+        cases: IdentifiedArrayOf<Declaration> = [],
+        nestingStructs: IdentifiedArrayOf<Declaration> = [],
+        nestingClasses: IdentifiedArrayOf<Declaration> = [],
+        nestingEnums: IdentifiedArrayOf<Declaration> = [],
     ) {
         self.id = id
-        self.name = name
+        self.hierarchicalNames = hierarchicalNames
         self.sourceLocationRange = sourceLocationRange
         self.definitionUSRs = definitionUSRs
         self.callersUSRs = callersUSRs
@@ -75,7 +68,7 @@ struct AbstractDeclaration: Identifiable, Equatable, Hashable {
         self.kind = kind
     }
 
-    func generateKeyPath(fromRootDirectory keyPath: KeyPath<Directory?, AbstractDeclaration?>) -> KeyPathTable {
+    func generateKeyPath(fromRootDirectory keyPath: KeyPath<Directory?, Declaration?>) -> KeyPathTable {
         var table = KeyPathTable(directories: [:], files: [:], abstractDeclarations: [:])
 
         definitionUSRs.forEach { usr in
@@ -92,10 +85,22 @@ struct AbstractDeclaration: Identifiable, Equatable, Hashable {
 
         return table
     }
+
+    mutating func updatedSortedChildren() {
+        var array = variables.elements
+        array.append(contentsOf: functions)
+        array.append(contentsOf: cases)
+        array.append(contentsOf: nestingStructs)
+        array.append(contentsOf: nestingClasses)
+        array.append(contentsOf: nestingEnums)
+        sortedChildren = array.sorted(by: {
+            $0.sourceLocationRange.lowerBound < $1.sourceLocationRange.lowerBound
+        })
+    }
 }
 
-extension AbstractDeclaration {
-    enum Kind {
+public extension Declaration {
+    enum Kind: Sendable {
         case `struct`
         case `class`
         case `enum`
@@ -105,7 +110,7 @@ extension AbstractDeclaration {
     }
 }
 
-private extension AbstractDeclaration {
+private extension Declaration {
     enum SearchedProperty: CaseIterable {
         case variables
         case functions
@@ -114,7 +119,7 @@ private extension AbstractDeclaration {
         case nestingClasses
         case nestingEnums
 
-        var keyPath: KeyPath<AbstractDeclaration, IdentifiedArrayOf<AbstractDeclaration>> {
+        var keyPath: KeyPath<Declaration, IdentifiedArrayOf<Declaration>> {
             switch self {
             case .variables: \.variables
             case .functions: \.functions
@@ -125,7 +130,7 @@ private extension AbstractDeclaration {
             }
         }
 
-        func keyPath(withID id: UUID) -> KeyPath<AbstractDeclaration?, AbstractDeclaration?> {
+        func keyPath(withID id: UUID) -> KeyPath<Declaration?, Declaration?> {
             switch self {
             case .variables: \.?.variables[id: id]
             case .functions: \.?.functions[id: id]

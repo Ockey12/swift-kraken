@@ -1,5 +1,5 @@
 //
-//  RootDirectoryClient.swift
+//  RootDirectoryClientTest.swift
 //  Package
 //
 //  Created by Ockey on 2025/09/11.
@@ -29,7 +29,7 @@ func rootDirectoryClientTest() async throws {
 
     let subCounterViewModelID = UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
     let subCounterViewModelUSR = USR("s:8TestData19SubCounterViewModelC")
-    let subCounterViewModel = AbstractDeclaration(
+    let subCounterViewModel = Declaration(
         id: subCounterViewModelID,
         name: "SubCounterViewModel",
         kind: .class,
@@ -84,7 +84,7 @@ func rootDirectoryClientTest() async throws {
             column: 18,
         )
     let countUSR = USR("s:8TestData16CounterViewModelC5countSivp")
-    let count = AbstractDeclaration(
+    let count = Declaration(
         id: countID,
         name: "count",
         kind: .variable,
@@ -104,7 +104,7 @@ func rootDirectoryClientTest() async throws {
             column: 6,
         )
     let incrementUSR = USR("s:8TestData16CounterViewModelC9incrementyyF")
-    let increment = AbstractDeclaration(
+    let increment = Declaration(
         id: incrementID,
         name: "increment",
         kind: .function,
@@ -125,7 +125,7 @@ func rootDirectoryClientTest() async throws {
         )
     let counterViewModelUSR = USR("s:8TestData16CounterViewModelC")
     let counterViewModelInitUSR = USR("s:8TestData16CounterViewModelCACycfc")
-    let counterViewModel = AbstractDeclaration(
+    let counterViewModel = Declaration(
         id: counterViewModelID,
         name: "CounterViewModel",
         kind: .class,
