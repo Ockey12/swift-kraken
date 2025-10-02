@@ -183,7 +183,6 @@ final class MainWindowController: NSWindowController, NSToolbarDelegate {
         guard let swiftURL = swiftDirectoryURL, let indexURL = indexStoreDirectoryURL else {
             return
         }
-        // Kick async extraction
         Task {
             do {
                 let root = try await rootDirectoryClient.extract(swiftURL, indexURL)
