@@ -30,7 +30,7 @@ enum DependenciesStoreGenerator {
         return store
     }
 
-    static func generateWithDeclaration(_ declaration: AbstractDeclaration, occurrence: Occurrence) -> DependenciesStore {
+    static func generateWithDeclaration(_ declaration: Declaration, occurrence: Occurrence) -> DependenciesStore {
         var store = DependenciesStore(referrerUSRs: [:], referencedUSRs: [:])
         guard let childDeclaration = declaration.sortedChildren.declaration(containing: occurrence.location) else {
             declaration.definitionUSRs.forEach { referrerUSR in
@@ -44,7 +44,7 @@ enum DependenciesStoreGenerator {
     }
 }
 
-private extension [AbstractDeclaration] {
+private extension [Declaration] {
     func declaration(containing location: Location) -> Element? {
         guard !isEmpty else {
             return nil

@@ -101,7 +101,7 @@ private final class ColumnViewState {
 
 final class ScrollViewController: NSViewController {
     private final class DeclarationOutlineView: NSOutlineView {
-        var onOpenInXcode: ((AbstractDeclaration) -> Void)?
+        var onOpenInXcode: ((Declaration) -> Void)?
 
         override func menu(for event: NSEvent) -> NSMenu? {
             let windowPoint = event.locationInWindow
@@ -149,12 +149,12 @@ final class ScrollViewController: NSViewController {
         var dragInitialWidth: CGFloat = 0
 
         // Context for dependency columns
-        var titleDeclaration: AbstractDeclaration?
+        var titleDeclaration: Declaration?
         var currentFilter: DependencyFilter = .all
         var expandedIDsByFilter: [DependencyFilter: Set<UUID>] = [:]
-        var dependenciesAll: IdentifiedArrayOf<AbstractDeclaration> = []
-        var dependenciesReferrers: IdentifiedArrayOf<AbstractDeclaration> = []
-        var dependenciesReferenced: IdentifiedArrayOf<AbstractDeclaration> = []
+        var dependenciesAll: IdentifiedArrayOf<Declaration> = []
+        var dependenciesReferrers: IdentifiedArrayOf<Declaration> = []
+        var dependenciesReferenced: IdentifiedArrayOf<Declaration> = []
 
         init(
             containerView: NSView,
@@ -180,9 +180,9 @@ final class ScrollViewController: NSViewController {
     @MainActor
     private final class DeclarationOutlineDataSource: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegate {
         final class Node: NSObject {
-            let declaration: AbstractDeclaration
+            let declaration: Declaration
             let children: [Node]
-            init(declaration: AbstractDeclaration, children: [Node]) {
+            init(declaration: Declaration, children: [Node]) {
                 self.declaration = declaration
                 self.children = children
                 super.init()
@@ -191,19 +191,19 @@ final class ScrollViewController: NSViewController {
 
         private(set) var rootNodes: [Node] = []
         weak var columnContext: ColumnContext?
-        var onArrowTapped: ((AbstractDeclaration, ColumnContext) -> Void)?
+        var onArrowTapped: ((Declaration, ColumnContext) -> Void)?
         private var buttonToNode: [ObjectIdentifier: Node] = [:]
         private var nodeCacheByID: [UUID: Node] = [:]
 
-        func update(with declarations: IdentifiedArrayOf<AbstractDeclaration>) {
+        func update(with declarations: IdentifiedArrayOf<Declaration>) {
             rootNodes = declarations.map { decl in
                 buildNode(from: decl)
             }
             rebuildNodeCache()
         }
 
-        private func buildNode(from declaration: AbstractDeclaration) -> Node {
-            let childrenDecls: [AbstractDeclaration] =
+        private func buildNode(from declaration: Declaration) -> Node {
+            let childrenDecls: [Declaration] =
                 Array(declaration.variables)
                     + Array(declaration.functions)
                     + Array(declaration.cases)
@@ -524,7 +524,7 @@ final class ScrollViewController: NSViewController {
     }
 
     func resetToSingleColumnDisplaying(
-        declarations: IdentifiedArrayOf<AbstractDeclaration>,
+        declarations: IdentifiedArrayOf<Declaration>,
         headerTitle: String,
         defaultWidth: CGFloat = 320,
     ) {
@@ -847,14 +847,14 @@ final class ScrollViewController: NSViewController {
         updateRubberBandingState()
     }
 
-    private func openDependencies(of declaration: AbstractDeclaration, from column: ColumnContext) {
+    private func openDependencies(of declaration: Declaration, from column: ColumnContext) {
         guard let rootDirectory else {
             return
         }
 
-        var setAll: Set<AbstractDeclaration> = []
-        var setReferrers: Set<AbstractDeclaration> = []
-        var setReferenced: Set<AbstractDeclaration> = []
+        var setAll: Set<Declaration> = []
+        var setReferrers: Set<Declaration> = []
+        var setReferenced: Set<Declaration> = []
         for usr in declaration.definitionUSRs {
             let referrers = rootDirectory.getReferrers(referencedUSR: usr)
             let referenced = rootDirectory.getReferenced(referrerUSR: usr)
@@ -912,7 +912,7 @@ final class ScrollViewController: NSViewController {
     }
 
     private func applyFilter(for column: ColumnContext) {
-        let declarations: IdentifiedArrayOf<AbstractDeclaration> =
+        let declarations: IdentifiedArrayOf<Declaration> =
             switch column.currentFilter {
             case .all:
                 column.dependenciesAll
@@ -963,7 +963,7 @@ final class ScrollViewController: NSViewController {
         }
     }
 
-    private func openDeclarationInXcode(_ declaration: AbstractDeclaration) {
+    private func openDeclarationInXcode(_ declaration: Declaration) {
         let location = declaration.sourceLocationRange.lowerBound
         guard location.fullPath.isEmpty == false else {
             return

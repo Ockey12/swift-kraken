@@ -1,5 +1,5 @@
 //
-//  AbstractDeclarationVisitor.swift
+//  DeclarationVisitor.swift
 //  Package
 //
 //  Created by Ockey on 2025/09/09.
@@ -12,14 +12,14 @@ import Location
 import SwiftParser
 import SwiftSyntax
 
-final class AbstractDeclarationVisitor: SyntaxVisitor {
+final class DeclarationVisitor: SyntaxVisitor {
     private let fullPath: String
     private let indexStoreResponse: IndexStoreResponse
     private let sourceLocationConverter: SourceLocationConverter
-    private var abstractDeclarationsBuffer: [AbstractDeclaration] = []
+    private var abstractDeclarationsBuffer: [Declaration] = []
     private var hierarchicalNames: [String] = []
 
-    var result: IdentifiedArrayOf<AbstractDeclaration> = []
+    var result: IdentifiedArrayOf<Declaration> = []
 
     @Dependency(\.uuid) private var uuid
 
@@ -50,7 +50,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
                 line: nodeRange.end.line,
                 column: nodeRange.end.column,
             )
-        var abstractDeclaration = AbstractDeclaration(
+        var abstractDeclaration = Declaration(
             id: uuid(),
             hierarchicalNames: hierarchicalNames,
             kind: .struct,
@@ -102,7 +102,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
                 line: nodeRange.end.line,
                 column: nodeRange.end.column,
             )
-        var abstractDeclaration = AbstractDeclaration(
+        var abstractDeclaration = Declaration(
             id: uuid(),
             hierarchicalNames: hierarchicalNames,
             kind: .class,
@@ -154,7 +154,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
                 line: nodeRange.end.line,
                 column: nodeRange.end.column,
             )
-        var abstractDeclaration = AbstractDeclaration(
+        var abstractDeclaration = Declaration(
             id: uuid(),
             hierarchicalNames: hierarchicalNames,
             kind: .enum,
@@ -210,7 +210,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
             let identifiers = extractIdentifiers(from: binding.pattern)
 
             for identifier in identifiers {
-                var abstractDeclaration = AbstractDeclaration(
+                var abstractDeclaration = Declaration(
                     id: uuid(),
                     hierarchicalNames: hierarchicalNames + [identifier.identifier.text],
                     kind: .variable,
@@ -264,7 +264,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
     }
 
     override func visitPost(_ node: VariableDeclSyntax) {
-        var variables: [AbstractDeclaration] = []
+        var variables: [Declaration] = []
 
         var variableCount = 0
         for binding in node.bindings {
@@ -309,7 +309,7 @@ final class AbstractDeclarationVisitor: SyntaxVisitor {
                 line: nodeRange.end.line,
                 column: nodeRange.end.column,
             )
-        var abstractDeclaration = AbstractDeclaration(
+        var abstractDeclaration = Declaration(
             id: uuid(),
             hierarchicalNames: hierarchicalNames,
             kind: .function,

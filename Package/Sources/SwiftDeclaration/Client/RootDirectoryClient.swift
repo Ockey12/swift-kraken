@@ -101,7 +101,7 @@ private extension RootDirectoryClient {
         let parsedCode = Parser.parse(source: sourceCode)
         let fullPath = url.path()
         let sourceLocationConverter = SourceLocationConverter(fileName: fullPath, tree: parsedCode)
-        let visitor = AbstractDeclarationVisitor(
+        let visitor = DeclarationVisitor(
             in: fullPath,
             indexStoreResponse: indexStoreResponse,
             sourceLocationConverter: sourceLocationConverter,

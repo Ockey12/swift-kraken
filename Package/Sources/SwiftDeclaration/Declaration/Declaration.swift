@@ -1,5 +1,5 @@
 //
-//  AbstractDeclaration.swift
+//  Declaration.swift
 //  Package
 //
 //  Created by Ockey on 2025/09/09.
@@ -10,7 +10,7 @@ import IdentifiedCollections
 import IndexStore
 import Location
 
-public struct AbstractDeclaration: Identifiable, Equatable, Hashable, Sendable {
+public struct Declaration: Identifiable, Equatable, Hashable, Sendable {
     public let id: UUID
     public var hierarchicalNames: [String]
     public var name: String? {
@@ -26,34 +26,17 @@ public struct AbstractDeclaration: Identifiable, Equatable, Hashable, Sendable {
     public var callersUSRs: Set<USR>
     public var calleesUSRs: Set<USR>
 
-    public var variables: IdentifiedArrayOf<AbstractDeclaration>
-    public var functions: IdentifiedArrayOf<AbstractDeclaration>
-    public var cases: IdentifiedArrayOf<AbstractDeclaration>
+    public var variables: IdentifiedArrayOf<Declaration>
+    public var functions: IdentifiedArrayOf<Declaration>
+    public var cases: IdentifiedArrayOf<Declaration>
 
-    public var nestingStructs: IdentifiedArrayOf<AbstractDeclaration>
-    public var nestingClasses: IdentifiedArrayOf<AbstractDeclaration>
-    public var nestingEnums: IdentifiedArrayOf<AbstractDeclaration>
+    public var nestingStructs: IdentifiedArrayOf<Declaration>
+    public var nestingClasses: IdentifiedArrayOf<Declaration>
+    public var nestingEnums: IdentifiedArrayOf<Declaration>
 
     public let kind: Kind
 
-    private(set) var sortedChildren: [AbstractDeclaration] = []
-
-//    var swiftDeclaration: SwiftDeclaration {
-//        switch kind {
-//        case .struct:
-//            .struct(StructDeclaration.generate(from: self))
-//        case .class:
-//            .class(ClassDeclaration.generate(from: self))
-//        case .enum:
-//            .enum(EnumDeclaration.generate(from: self))
-//        case .variable:
-//            .variable(VariableDeclaration.generate(from: self))
-//        case .function:
-//            .function(FunctionDeclaration.generate(from: self))
-//        case .case:
-//            .case(CaseDeclaration.generate(from: self))
-//        }
-//    }
+    private(set) var sortedChildren: [Declaration] = []
 
     public init(
         id: UUID,
@@ -63,12 +46,12 @@ public struct AbstractDeclaration: Identifiable, Equatable, Hashable, Sendable {
         definitionUSRs: [USR] = [],
         callersUSRs: Set<USR> = [],
         calleesUSRs: Set<USR> = [],
-        variables: IdentifiedArrayOf<AbstractDeclaration> = [],
-        functions: IdentifiedArrayOf<AbstractDeclaration> = [],
-        cases: IdentifiedArrayOf<AbstractDeclaration> = [],
-        nestingStructs: IdentifiedArrayOf<AbstractDeclaration> = [],
-        nestingClasses: IdentifiedArrayOf<AbstractDeclaration> = [],
-        nestingEnums: IdentifiedArrayOf<AbstractDeclaration> = [],
+        variables: IdentifiedArrayOf<Declaration> = [],
+        functions: IdentifiedArrayOf<Declaration> = [],
+        cases: IdentifiedArrayOf<Declaration> = [],
+        nestingStructs: IdentifiedArrayOf<Declaration> = [],
+        nestingClasses: IdentifiedArrayOf<Declaration> = [],
+        nestingEnums: IdentifiedArrayOf<Declaration> = [],
     ) {
         self.id = id
         self.hierarchicalNames = hierarchicalNames
@@ -85,7 +68,7 @@ public struct AbstractDeclaration: Identifiable, Equatable, Hashable, Sendable {
         self.kind = kind
     }
 
-    func generateKeyPath(fromRootDirectory keyPath: KeyPath<Directory?, AbstractDeclaration?>) -> KeyPathTable {
+    func generateKeyPath(fromRootDirectory keyPath: KeyPath<Directory?, Declaration?>) -> KeyPathTable {
         var table = KeyPathTable(directories: [:], files: [:], abstractDeclarations: [:])
 
         definitionUSRs.forEach { usr in
@@ -116,7 +99,7 @@ public struct AbstractDeclaration: Identifiable, Equatable, Hashable, Sendable {
     }
 }
 
-public extension AbstractDeclaration {
+public extension Declaration {
     enum Kind: Sendable {
         case `struct`
         case `class`
@@ -127,7 +110,7 @@ public extension AbstractDeclaration {
     }
 }
 
-private extension AbstractDeclaration {
+private extension Declaration {
     enum SearchedProperty: CaseIterable {
         case variables
         case functions
@@ -136,7 +119,7 @@ private extension AbstractDeclaration {
         case nestingClasses
         case nestingEnums
 
-        var keyPath: KeyPath<AbstractDeclaration, IdentifiedArrayOf<AbstractDeclaration>> {
+        var keyPath: KeyPath<Declaration, IdentifiedArrayOf<Declaration>> {
             switch self {
             case .variables: \.variables
             case .functions: \.functions
@@ -147,7 +130,7 @@ private extension AbstractDeclaration {
             }
         }
 
-        func keyPath(withID id: UUID) -> KeyPath<AbstractDeclaration?, AbstractDeclaration?> {
+        func keyPath(withID id: UUID) -> KeyPath<Declaration?, Declaration?> {
             switch self {
             case .variables: \.?.variables[id: id]
             case .functions: \.?.functions[id: id]

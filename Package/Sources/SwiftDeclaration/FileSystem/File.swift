@@ -15,7 +15,7 @@ public struct File: Identifiable, Equatable, Hashable, Sendable {
     public let fullPath: String
 
     public let sourceCode: String
-    public internal(set) var topDeclarations: IdentifiedArrayOf<AbstractDeclaration>
+    public internal(set) var topDeclarations: IdentifiedArrayOf<Declaration>
 
     func generateKeyPath(fromRootDirectory keyPath: KeyPath<Directory?, File?>) -> KeyPathTable {
         var table = KeyPathTable(directories: [:], files: [:], abstractDeclarations: [:])

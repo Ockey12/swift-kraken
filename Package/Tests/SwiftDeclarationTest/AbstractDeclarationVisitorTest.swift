@@ -24,7 +24,7 @@ func extractObjectFromTestData() throws {
     let fullPath = fileURL.path()
     let sourceCode = try String(contentsOfFile: fileURL.path(), encoding: .utf8)
     let parsedCode = Parser.parse(source: sourceCode)
-    let visitor = AbstractDeclarationVisitor(
+    let visitor = DeclarationVisitor(
         in: fileURL.path(),
         usrStore: USRStore(
             definitionUSRs: [:],
@@ -42,31 +42,31 @@ func extractObjectFromTestData() throws {
     } operation: {
         let expectedResult = IdentifiedArray(
             uniqueElements: [
-                AbstractDeclaration(
+                Declaration(
                     id: UUID(uuidString: "00000000-0000-0000-0000-000000000000")!,
                     name: "EmptyStruct",
                     kind: .struct,
                     sourceLocationRange: Location(fullPath: fullPath, line: 8, column: 1) ... Location(fullPath: fullPath, line: 8, column: 22),
                 ),
-                AbstractDeclaration(
+                Declaration(
                     id: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!,
                     name: "EmptyClass",
                     kind: .class,
                     sourceLocationRange: Location(fullPath: fullPath, line: 10, column: 1) ... Location(fullPath: fullPath, line: 10, column: 20),
                 ),
-                AbstractDeclaration(
+                Declaration(
                     id: UUID(uuidString: "00000000-0000-0000-0000-000000000002")!,
                     name: "EmptyEnum",
                     kind: .enum,
                     sourceLocationRange: Location(fullPath: fullPath, line: 12, column: 1) ... Location(fullPath: fullPath, line: 12, column: 18),
                 ),
-                AbstractDeclaration(
+                Declaration(
                     id: UUID(uuidString: "00000000-0000-0000-0000-000000000003")!,
                     name: "emptyVariable",
                     kind: .variable,
                     sourceLocationRange: Location(fullPath: fullPath, line: 14, column: 1) ... Location(fullPath: fullPath, line: 14, column: 22),
                 ),
-                AbstractDeclaration(
+                Declaration(
                     id: UUID(uuidString: "00000000-0000-0000-0000-000000000004")!,
                     name: "emptyFunction",
                     kind: .function,
